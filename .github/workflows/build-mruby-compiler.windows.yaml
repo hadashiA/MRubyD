@@ -1,0 +1,49 @@
+name: Build mruby-compiler (Windows)
+on:
+  workflow_call:
+  workflow_dispatch:
+
+env:
+  MRUBY_DIR: ${{ github.workspace }}/src/MRubyD.Compiler/mruby
+  CONFIG_DIR: ${{ github.workspace }}/src/MRubyD.Compiler
+    
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        arch:
+        - amd64
+        # - amd64_arm64
+    outputs:
+      artifact-url: ${{ steps.upload-windows-build.artifact-url }}
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+    - uses: ruby/setup-ruby@v1
+      with:
+        # ruby-version: mswin
+        ruby-version: '3.3'
+
+    # - uses: ilammy/msvc-dev-cmd@v1.13.0
+    #   with:
+    #     arch: ${{ matrix.arch }}
+
+    - name: Build mruby (windows)
+      working-directory: ${{ env.MRUBY_DIR }}
+      shell: bash
+      run: |
+        MRUBY_CONFIG=${{ env.CONFIG_DIR }}/build_config.windows.rb rake        
+        
+    - uses: actions/upload-artifact@v4
+      id: upload-windows-build
+      with:
+        name: windows-build
+        path: ${{ env.MRUBY_DIR }}/build
+        
+        
+      
+
+    
+    

@@ -7,7 +7,6 @@ MRuby::CrossBuild.new("macos-arm64") do |conf|
   conf.disable_presym
   conf.cc.defines = %w(MRB_WORD_BOXING MRB_NO_PRESYM)
   conf.cc.flags << '-arch arm64'
-  conf.cc.flags << '-Os'
   conf.linker.flags << '-arch arm64'
 end
 

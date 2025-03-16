@@ -1,0 +1,12 @@
+name: Build mruby-compiler native
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  build-windows:
+    uses: ./.github/workflows/build-mruby-compiler.windows.yaml
+  build-linux:
+    uses: ./.github/workflows/build-mruby-compiler.linux.yaml
+  build-macOS:
+    uses: ./.github/workflows/build-mruby-compiler.macOS.yaml
