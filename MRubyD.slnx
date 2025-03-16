@@ -1,7 +1,5 @@
 ﻿<Solution>
-  <Folder Name="/sandbox/">
-    <Project Path="sandbox\ConsoleApp1\ConsoleApp1.csproj" Type="Classic C#" />
-  </Folder>
+  <Folder Name="/sandbox/" />
   <Folder Name="/src/">
     <Project Path="src\MRubyD.Compiler\MRubyD.Compiler.csproj" Type="Classic C#" />
     <Project Path="src\MRubyD.SourceGenerator\MRubyD.SourceGenerator.csproj" Type="Classic C#" />
