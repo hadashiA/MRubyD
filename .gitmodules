@@ -1,0 +1,3 @@
+[submodule "src/MRubyD.Compiler/mruby"]
+	path = src/MRubyD.Compiler/mruby
+	url = https://github.com/mruby/mruby.git

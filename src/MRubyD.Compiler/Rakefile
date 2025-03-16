@@ -1,0 +1,17 @@
+MRUBY_ROOT = File.expand_path('../mruby', __FILE__)
+
+PLATFORMS = {
+  'windows-x64' => 'dll',
+  'macos-arm64' => 'dylib',
+  'macos-x64' => 'dylib',
+  'linux-x64' => 'so',
+  'linux-arm64' => 'so',
+}
+
+task :build, ['target'] do |t, args|
+  build_config_path = File.expand_path("../build_config.#{args.target}.rb", __FILE__)
+  
+  Dir.chdir(MRUBY_ROOT) do
+    sh "MRUBY_CONFIG=#{build_config_path} rake"
+  end
+end

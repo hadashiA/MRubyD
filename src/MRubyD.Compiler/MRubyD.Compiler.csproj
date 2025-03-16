@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <RuntimeIdentifiers>osx-arm64</RuntimeIdentifiers>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="MRubyD.Tests" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\MRubyD\MRubyD.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Include=".\mruby\build\macos-arm64\lib\libmruby.dylib">
+        <Link>runtimes\osx-arm64\native\libmruby.dylib</Link>
+        <PackagePath>runtimes\osx-arm64\native\libmruby.dylib</PackagePath>
+        <Pack>true</Pack>
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+    </ItemGroup>
+</Project>

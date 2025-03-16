@@ -1,0 +1,6 @@
+LIBRARY libmruby.dll
+EXPORTS
+    mrb_open
+    mrb_close
+    mrb_free
+    mrbd_compile
