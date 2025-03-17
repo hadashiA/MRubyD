@@ -1269,19 +1269,21 @@ partial class MRubyState
 
                         callInfo.ReadOperand(sequence, out byte a);
                         var env = callInfo.Scope as REnv;
-                        var dest = callInfo.Proc.FindTop(out env);
+                        var dest = callInfo.Proc.FindTop(out var topEnv);
+                        if (topEnv != null) env = topEnv;
                         if (dest.Scope is not REnv destEnv || destEnv.Context == context)
                         {
                             // check jump destination
                             for (var i = context.CallDepth; i >= 0; i--)
                             {
-                                callInfo = ref context.CallStack[i];
-                                if (callInfo.Scope == env)
+                                if (context.CallStack[i].Scope == env)
                                 {
-                                    if (TryReturnJump(ref callInfo, context.CallDepth, registers[a]))
+                                    var returnValue = registers[a];
+                                    if (TryReturnJump(ref callInfo, i, returnValue))
                                     {
                                         goto JumpAndNext;
                                     }
+                                    return returnValue;
                                 }
                             }
                         }

@@ -133,6 +133,15 @@ public class VmTest
         Assert.That(result, Is.EqualTo(MRubyValue.From(123)));
     }
 
+    [Test]
+    public void ReturnBlk()
+    {
+        var result = Exec("""
+                          [1,2,3].find{|x| x == 2 }
+                          """u8);
+        Assert.That(result, Is.EqualTo(MRubyValue.From(2)));
+    }
+
     MRubyValue Exec(ReadOnlySpan<byte> code)
     {
         var irep = compiler.Compile(code);
