@@ -48,7 +48,7 @@ public abstract class RProc(RClass procClass) : RObject(MRubyVType.Proc, procCla
         env = null;
         while (p.Upper != null)
         {
-            if (HasFlag(MRubyObjectFlags.ProcScope) || HasFlag(MRubyObjectFlags.ProcStrict))
+            if (p.HasFlag(MRubyObjectFlags.ProcScope | MRubyObjectFlags.ProcStrict))
             {
                 return p;
             }

@@ -2143,17 +2143,21 @@ partial class MRubyState
 
     bool TryReturnJump(ref MRubyCallInfo callInfo, int returnDepth, MRubyValue returnValue)
     {
-        if (TryUnwindEnsureJump(ref callInfo, returnDepth, BreakTag.Break, returnValue))
+        while (true)
         {
-            return true;
-        }
+            if (TryUnwindEnsureJump(ref callInfo, returnDepth, BreakTag.Break, returnValue))
+            {
+                return true;
+            }
 
-        Exception = null; // Clear break object
+            if (context.CallDepth == returnDepth)
+            {
+                break;
+            }
 
-        if (context.CallDepth != returnDepth)
-        {
             var callerType = callInfo.CallerType;
             context.PopCallStack();
+            callInfo = ref context.CurrentCallInfo;
             if (callerType != CallerType.InVmLoop)
             {
                 Exception = new MRubyBreakException(this, new RBreak
@@ -2162,9 +2166,10 @@ partial class MRubyState
                     Tag = BreakTag.Break,
                     Value = returnValue
                 });
-                throw Exception; // TODO:
+                throw Exception;
             }
         }
+        Exception = null; // Clear break object
 
         // root
         if (context.CallDepth == 0)
