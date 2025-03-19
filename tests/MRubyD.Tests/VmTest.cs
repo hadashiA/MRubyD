@@ -142,6 +142,37 @@ public class VmTest
         Assert.That(result, Is.EqualTo(MRubyValue.From(2)));
     }
 
+    [Test]
+    public void Attr()
+    {
+        var result = Exec("""
+                          class Foo
+                            attr_reader :a
+                            
+                            def initialize(a)
+                              @a = a
+                            end
+                          end
+                          Foo.new(123).a
+                          """u8);
+
+        Assert.That(result, Is.EqualTo(MRubyValue.From(123)));
+    }
+
+    [Test]
+    public void NoStrictProcCall()
+    {
+        var result = Exec("""
+                          def iter
+                            yield 1
+                          end
+                          iter do |a, b=2, c|
+                            c
+                          end
+                          """u8);
+        Assert.That(result, Is.EqualTo(MRubyValue.Nil));
+    }
+
     MRubyValue Exec(ReadOnlySpan<byte> code)
     {
         var irep = compiler.Compile(code);

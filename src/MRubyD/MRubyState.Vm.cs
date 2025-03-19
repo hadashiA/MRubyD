@@ -17,72 +17,14 @@ partial class MRubyState
     public int GetKeywordArgumentCount() => context.GetKeywordArgumentCount();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public MRubyValue GetArg(int index)
-    {
-        TryGetArg(index, out var result);
-        return result;
-    }
+    public MRubyValue GetArg(int index) => context.GetArg(index);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public MRubyValue GetKeywordArg(Symbol key)
-    {
-        TryGetKeywordArg(key, out var result);
-        return result;
-    }
+    public MRubyValue GetKeywordArg(Symbol key) => context.GetKeywordArg(key);
 
-    public bool TryGetArg(int index, out MRubyValue value)
-    {
-        ref var callInfo = ref context.CurrentCallInfo;
-        if (callInfo.ArgumentPacked)
-        {
-            var args = context.Stack[callInfo.StackPointer + 1].As<RArray>();
-            if (index < args.Length)
-            {
-                value = args[index];
-                return true;
-            }
-        }
-        else
-        {
-            if (index < context.CurrentCallInfo.ArgumentCount)
-            {
-                value = context.Stack[callInfo.StackPointer + 1 + index];
-                return true;
-            }
-        }
-        value = default;
-        return false;
-    }
-
-    public bool TryGetKeywordArg(Symbol key, out MRubyValue value)
-    {
-        ref var callInfo = ref context.CurrentCallInfo;
-        var offset = callInfo.KeywordArgumentOffset;
-        if (offset < 0)
-        {
-            value = default;
-            return false;
-        }
-
-        if (callInfo.KeywordArgumentPacked)
-        {
-            var kdict = context.Stack[callInfo.StackPointer + offset].As<RHash>();
-            return kdict.TryGetValue(MRubyValue.From(key), out value);
-        }
-
-        for (var i = 0; i < callInfo.KeywordArgumentCount; i++)
-        {
-            var k = context.Stack[callInfo.StackPointer + offset + i * 2];
-            if (k.SymbolValue == key)
-            {
-                value = context.Stack[callInfo.StackPointer + offset + i * 2 + 1];
-                return true;
-            }
-        }
-
-        value = default;
-        return false;
-    }
+    public bool TryGetArg(int index, out MRubyValue value) => context.TryGetArg(index, out value);
+    public bool TryGetKeywordArg(Symbol key, out MRubyValue value) => context.TryGetKeywordArg(key, out value);
+    public MRubyValue GetSelf() => context.GetSelf();
 
     public ReadOnlySpan<KeyValuePair<Symbol, MRubyValue>> GetKeywordArgs() =>
         context.GetKeywordArgs(ref context.CurrentCallInfo);
@@ -665,7 +607,7 @@ partial class MRubyState
                     case OpCode.GetUpVar:
                     {
                         callInfo.ReadOperand(sequence, out byte a, out byte b, out byte c);
-                        var env = callInfo.Proc?.FindClosestEnv(c);
+                        var env = callInfo.Proc?.FindUpperEnvTo(c);
                         if (env != null && b < env.Stack.Length)
                         {
                             registers[a] = env.Stack.Span[b];
@@ -679,7 +621,7 @@ partial class MRubyState
                     case OpCode.SetUpVar:
                     {
                         callInfo.ReadOperand(sequence, out byte a, out byte b, out byte c);
-                        var env = callInfo.Proc?.FindClosestEnv(c);
+                        var env = callInfo.Proc?.FindUpperEnvTo(c);
                         if (env != null && b < env.Stack.Length)
                         {
                             env.Stack.Span[b] = registers[a];
@@ -974,12 +916,12 @@ partial class MRubyState
                             sequence = irep.Sequence.AsSpan();
                             callInfo.ProgramCounter = irepProc.ProgramCounter;
 
-                            if (callInfo.NumberOfRegisters < irep.RegisterVariableCount)
+                            if (callInfo.BlockArgumentOffset + 1 < irep.RegisterVariableCount)
                             {
                                 context.ExtendStack(irep.RegisterVariableCount);
                                 context.ClearStack(
-                                    callInfo.StackPointer + callInfo.NumberOfRegisters,
-                                    irep.RegisterVariableCount - callInfo.NumberOfRegisters);
+                                    callInfo.StackPointer + callInfo.BlockArgumentOffset + 1,
+                                    irep.RegisterVariableCount - callInfo.BlockArgumentOffset + 1);
                             }
                             registers = context.Stack.AsSpan(callInfo.StackPointer);
                             if (irepProc.Scope is REnv env)
@@ -1268,9 +1210,7 @@ partial class MRubyState
                         }
 
                         callInfo.ReadOperand(sequence, out byte a);
-                        var env = callInfo.Scope as REnv;
-                        var dest = callInfo.Proc.FindTop(out var topEnv);
-                        if (topEnv != null) env = topEnv;
+                        var dest = callInfo.Proc.FindReturningDestination(out var env);
                         if (dest.Scope is not REnv destEnv || destEnv.Context == context)
                         {
                             // check jump destination
@@ -1337,7 +1277,7 @@ partial class MRubyState
                         }
                         else
                         {
-                            var env = callInfo.Proc?.FindClosestEnv(lv - 1);
+                            var env = callInfo.Proc?.FindUpperEnvTo(lv - 1);
                             if (env == null ||
                                 (!env.OnStack && env.MethodId == default) ||
                                 env.Stack.Length <= offset + 1)

@@ -135,6 +135,10 @@ partial class MRubyState
         return m;
     }
 
+    public void DefineMethod(RClass c, Symbol id, MRubyFunc func) =>
+        DefineMethod(c, id, new MRubyMethod(func));
+
+
     public void DefineMethod(RClass c, Symbol id, MRubyMethod method)
     {
         c = c.AsOrigin();

@@ -93,10 +93,11 @@ static class ModuleMembers
             var methodId = arg.SymbolValue;
             var name = state.PrepareInstanceVariableName(methodId);
 
-            state.DefineMethod(mod, methodId, new MRubyMethod((_, _) =>
+            state.DefineMethod(mod, methodId, (s, _) =>
             {
-                return mod.InstanceVariables.Get(name);
-            }));
+                var runtimeSelf = s.GetSelf();
+                return runtimeSelf.As<RObject>().InstanceVariables.Get(name);
+            });
         }
         return MRubyValue.Nil;
     });

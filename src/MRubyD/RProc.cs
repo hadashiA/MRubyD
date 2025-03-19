@@ -42,10 +42,10 @@ public abstract class RProc(RClass procClass) : RObject(MRubyVType.Proc, procCla
 
     ICallScope? scope;
 
-    internal RProc FindTop(out REnv? env)
+    internal RProc FindReturningDestination(out REnv? env)
     {
         var p = this;
-        env = null;
+        env = p.Scope as REnv;
         while (p.Upper != null)
         {
             if (p.HasFlag(MRubyObjectFlags.ProcScope | MRubyObjectFlags.ProcStrict))
@@ -58,7 +58,7 @@ public abstract class RProc(RClass procClass) : RObject(MRubyVType.Proc, procCla
         return p;
     }
 
-    internal REnv? FindClosestEnv(int up)
+    internal REnv? FindUpperEnvTo(int up)
     {
         RProc? proc = this;
         while (up-- > 0)

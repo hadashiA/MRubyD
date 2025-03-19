@@ -320,12 +320,74 @@ class MRubyContext
         return callInfo.KeywordArgumentCount;
     }
 
+
+    public bool TryGetArg(int index, out MRubyValue value)
+    {
+        ref var callInfo = ref CurrentCallInfo;
+        if (callInfo.ArgumentPacked)
+        {
+            var args = Stack[callInfo.StackPointer + 1].As<RArray>();
+            if (index < args.Length)
+            {
+                value = args[index];
+                return true;
+            }
+        }
+        else
+        {
+            if (index < CurrentCallInfo.ArgumentCount)
+            {
+                value = Stack[callInfo.StackPointer + 1 + index];
+                return true;
+            }
+        }
+        value = default;
+        return false;
+    }
+
+    public bool TryGetKeywordArg(Symbol key, out MRubyValue value)
+    {
+        ref var callInfo = ref CurrentCallInfo;
+        var offset = callInfo.KeywordArgumentOffset;
+        if (offset < 0)
+        {
+            value = default;
+            return false;
+        }
+
+        if (callInfo.KeywordArgumentPacked)
+        {
+            var kdict = Stack[callInfo.StackPointer + offset].As<RHash>();
+            return kdict.TryGetValue(MRubyValue.From(key), out value);
+        }
+
+        for (var i = 0; i < callInfo.KeywordArgumentCount; i++)
+        {
+            var k = Stack[callInfo.StackPointer + offset + i * 2];
+            if (k.SymbolValue == key)
+            {
+                value = Stack[callInfo.StackPointer + offset + i * 2 + 1];
+                return true;
+            }
+        }
+
+        value = default;
+        return false;
+    }
+
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public MRubyValue GetSelf()
+    {
+        ref var callInfo = ref CallStack[CallDepth];
+        return Stack[callInfo.StackPointer];
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public MRubyValue GetArg(int index)
     {
-        ref var callInfo = ref CallStack[CallDepth];
-        var arg = Stack[callInfo.StackPointer + 1 + index];
-        return arg;
+        TryGetArg(index, out var result);
+        return result;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
