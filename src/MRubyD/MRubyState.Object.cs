@@ -356,19 +356,19 @@ partial class MRubyState
         return MRubyValue.From(convertedValue.As<RArray>().Dup());
     }
 
-    IrepProc NewProc(Irep irep, RClass? targetClass = null)
+    RProc NewProc(Irep irep, RClass? targetClass = null)
     {
         ref var callInfo = ref context.CurrentCallInfo;
 
         targetClass ??= (callInfo.Proc?.Scope ?? callInfo.Scope).TargetClass;
-        return new IrepProc(irep, 0, ProcClass)
+        return new RProc(irep, 0, ProcClass)
         {
             Upper = callInfo.Proc,
             Scope = targetClass
         };
     }
 
-    IrepProc NewClosure(Irep irep)
+    RProc NewClosure(Irep irep)
     {
         ref var callInfo = ref context.CurrentCallInfo;
         var env = callInfo.Scope as REnv;
@@ -377,18 +377,13 @@ partial class MRubyState
         {
             if (callInfo.Proc is { } upper)
             {
-                if (upper is MethodAliasProc aliasProc)
-                {
-                    upper = aliasProc.Upper;
-                }
-
                 var methodId = callInfo.MethodId;
                 if (upper?.Scope is REnv { Context: null } x)
                 {
                     methodId = x.MethodId;
                 }
 
-                var stackSize = ((IrepProc)upper!).Irep.RegisterVariableCount;
+                var stackSize = upper!.Irep.RegisterVariableCount;
                 env = new REnv
                 {
                     Context = context,
@@ -400,7 +395,7 @@ partial class MRubyState
                 callInfo.Scope = env;
             }
         }
-        return new IrepProc(irep, 0, ProcClass)
+        return new RProc(irep, 0, ProcClass)
         {
             Upper = callInfo.Proc,
             Scope = env,

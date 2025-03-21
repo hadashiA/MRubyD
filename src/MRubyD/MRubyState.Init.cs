@@ -271,7 +271,7 @@ public partial class MRubyState
         // NOTE: Why implement Proc#call in byte code?
         // The arguments at the time of `call` method call need to be copied to Proc execution,
         // but bytecode does not need such copying
-        var callProc = new IrepProc(
+        var callProc = new RProc(
             new Irep
             {
                 RegisterVariableCount = 2,

@@ -173,14 +173,9 @@ partial class MRubyState
         }
         else
         {
-            var irepProc = (nextCallInfo.Proc as IrepProc)!;
+            var irepProc = nextCallInfo.Proc!;
             nextCallInfo.CallerType = CallerType.VmExecuted;
             nextCallInfo.ProgramCounter = irepProc.ProgramCounter;
-            if (nextCallInfo.Proc is MethodAliasProc aliasProc)
-            {
-                nextCallInfo.MethodId = aliasProc.MethodId;
-                nextCallInfo.Proc = aliasProc.Upper;
-            }
             return Exec(irepProc.Irep, irepProc.ProgramCounter, nextCallInfo.BlockArgumentOffset + 1);
         }
     }
@@ -218,12 +213,12 @@ partial class MRubyState
         }
         nextCallInfo.KeywordArgumentCount = 0;
 
-        if (block is not IrepProc irepProc)
+        if (block is not { } proc)
         {
             throw new NotSupportedException();
         }
 
-        return Exec(irepProc.Irep, irepProc.ProgramCounter, nextCallInfo.BlockArgumentOffset + 1);
+        return Exec(proc.Irep, proc.ProgramCounter, nextCallInfo.BlockArgumentOffset + 1);
     }
 
     public MRubyValue Exec(ReadOnlySpan<byte> bytecode)
@@ -235,7 +230,7 @@ partial class MRubyState
 
     public MRubyValue Exec(Irep irep)
     {
-        var proc = new IrepProc(irep, 0, ProcClass)
+        var proc = new RProc(irep, 0, ProcClass)
         {
             Upper = null,
             Scope = ObjectClass
@@ -880,13 +875,7 @@ partial class MRubyState
                             goto Next;
                         }
 
-                        // modify local variable and jump
-                        if (callInfo.Proc is MethodAliasProc aliasProc)
-                        {
-                            callInfo.MethodId = aliasProc.MethodId;
-                            callInfo.Proc = aliasProc.Upper;
-                        }
-                        var irepProc = (callInfo.Proc as IrepProc)!;
+                        var irepProc = callInfo.Proc;
                         irep = irepProc.Irep;
                         callInfo.ProgramCounter = irepProc.ProgramCounter;
 
@@ -904,44 +893,27 @@ partial class MRubyState
                         var receiver = registers[0];
                         var proc = receiver.As<RProc>();
 
-                        // handle alias
-                        if (proc is MethodAliasProc aliasProc)
-                        {
-                            callInfo.MethodId = aliasProc.MethodId;
-                            proc = aliasProc.Upper!;
-                        }
-                        else if (proc.Scope is REnv env)
-                        {
-                            callInfo.MethodId = env.MethodId;
-                        }
-
                         // replace callinfo
                         callInfo.Scope = proc.Scope!.TargetClass;
                         callInfo.Proc = proc;
 
                         // setup environment for calling method
-                        if (proc is IrepProc irepProc)
-                        {
-                            irep = irepProc.Irep;
-                            sequence = irep.Sequence.AsSpan();
-                            callInfo.ProgramCounter = irepProc.ProgramCounter;
+                        irep = proc.Irep;
+                        sequence = irep.Sequence.AsSpan();
+                        callInfo.ProgramCounter = proc.ProgramCounter;
 
-                            if (callInfo.BlockArgumentOffset + 1 < irep.RegisterVariableCount)
-                            {
-                                context.ExtendStack(irep.RegisterVariableCount);
-                                context.ClearStack(
-                                    callInfo.StackPointer + callInfo.BlockArgumentOffset + 1,
-                                    irep.RegisterVariableCount - callInfo.BlockArgumentOffset + 1);
-                            }
-                            registers = context.Stack.AsSpan(callInfo.StackPointer);
-                            if (irepProc.Scope is REnv env)
-                            {
-                                registers[0] = env.Stack.Span[0];
-                            }
-                        }
-                        else
+                        if (callInfo.BlockArgumentOffset + 1 < irep.RegisterVariableCount)
                         {
-                            throw new InvalidOperationException();
+                            context.ExtendStack(irep.RegisterVariableCount);
+                            context.ClearStack(
+                                callInfo.StackPointer + callInfo.BlockArgumentOffset + 1,
+                                irep.RegisterVariableCount - callInfo.BlockArgumentOffset + 1);
+                        }
+                        registers = context.Stack.AsSpan(callInfo.StackPointer);
+                        if (proc.Scope is REnv env)
+                        {
+                            callInfo.MethodId = env.MethodId;
+                            registers[0] = env.Stack.Span[0];
                         }
                         goto Next;
                     }
@@ -1981,13 +1953,7 @@ partial class MRubyState
                         // modify local variable and jump
                         callInfo = ref nextCallInfo;
 
-                        if (nextCallInfo.Proc is MethodAliasProc aliasProc)
-                        {
-                            callInfo.MethodId = aliasProc.MethodId;
-                            callInfo.Proc = aliasProc.Upper;
-                        }
-
-                        irep = (callInfo.Proc as IrepProc)!.Irep;
+                        irep = callInfo.Proc!.Irep;
                         sequence = irep.Sequence.AsSpan();
 
                         context.ExtendStack(callInfo.StackPointer + irep.RegisterVariableCount + 1);
@@ -2069,7 +2035,7 @@ partial class MRubyState
 
                 JumpAndNext:
                 callInfo = ref context.CurrentCallInfo;
-                irep = (callInfo.Proc as IrepProc)!.Irep;
+                irep = callInfo.Proc!.Irep;
                 registers = context.Stack.AsSpan(callInfo.StackPointer);
                 sequence = irep.Sequence.AsSpan();
             }
@@ -2079,7 +2045,7 @@ partial class MRubyState
                 if (TryRaiseJump(ref callInfo))
                 {
                     callInfo = ref context.CurrentCallInfo;
-                    irep = (callInfo.Proc as IrepProc)!.Irep;
+                    irep = callInfo.Proc!.Irep;
                     registers = context.Stack.AsSpan(callInfo.StackPointer);
                     sequence = irep.Sequence.AsSpan();
                 }
@@ -2148,7 +2114,7 @@ partial class MRubyState
 
     bool TryUnwindEnsureJump(ref MRubyCallInfo callInfo, int returnDepth, BreakTag tag, MRubyValue value)
     {
-        if (callInfo.Proc is IrepProc { Irep: { CatchHandlers.Length: > 0 } irep } &&
+        if (callInfo.Proc is { Irep: { CatchHandlers.Length: > 0 } irep } &&
             irep.TryFindCatchHandler(callInfo.ProgramCounter, CatchHandlerType.Ensure, out var catchHandler))
         {
             PrepareTaggedBreak(tag, returnDepth, value);
@@ -2162,7 +2128,7 @@ partial class MRubyState
     {
         while (true)
         {
-            if (callInfo.Proc is IrepProc { Irep: { CatchHandlers.Length: > 0 } irep } &&
+            if (callInfo.Proc is { Irep: { CatchHandlers.Length: > 0 } irep } &&
                 irep.TryFindCatchHandler(callInfo.ProgramCounter, CatchHandlerType.All, out var catchHandler))
             {
                 callInfo.ProgramCounter = (int)catchHandler.Target;

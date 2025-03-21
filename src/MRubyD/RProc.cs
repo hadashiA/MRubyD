@@ -32,7 +32,7 @@ class REnv() : RBasic(MRubyVType.Env, default!), ICallScope
     }
 }
 
-public abstract class RProc(RClass procClass) : RObject(MRubyVType.Proc, procClass), IEquatable<RProc>
+public class RProc(Irep irep, int programCounter, RClass procClass) : RObject(MRubyVType.Proc, procClass), IEquatable<RProc>
 {
     public required RProc? Upper { get; init; }
     public required ICallScope? Scope
@@ -40,6 +40,9 @@ public abstract class RProc(RClass procClass) : RObject(MRubyVType.Proc, procCla
         get => scope;
         init => scope = value;
     }
+
+    public Irep Irep => irep;
+    public int ProgramCounter => programCounter;
 
     ICallScope? scope;
 
@@ -76,7 +79,25 @@ public abstract class RProc(RClass procClass) : RObject(MRubyVType.Proc, procCla
         this.scope = scope;
     }
 
-    public abstract RProc Dup();
+    public RProc Dup()
+    {
+        var clone = new RProc(Irep, ProgramCounter, Class)
+        {
+            Upper = Upper,
+            Scope = Scope,
+        };
+        clone.SetFlag(Flags);
+        return clone;
+    }
+
+    public bool Equals(RProc? other)
+    {
+        if (other is { } otherProc)
+        {
+            return Irep == otherProc.Irep && ProgramCounter == otherProc.ProgramCounter;
+        }
+        return false;
+    }
 
     internal override RObject Clone()
     {
@@ -84,8 +105,6 @@ public abstract class RProc(RClass procClass) : RObject(MRubyVType.Proc, procCla
         InstanceVariables.CopyTo(clone.InstanceVariables);
         return clone;
     }
-
-    public abstract bool Equals(RProc? other);
 
     public static bool operator ==(RProc? a, RProc? b)
     {
@@ -111,66 +130,4 @@ public abstract class RProc(RClass procClass) : RObject(MRubyVType.Proc, procCla
         return HashCode.Combine(Upper, Scope);
     }
 
-}
-
-public sealed class IrepProc : RProc, IEquatable<RProc>
-{
-    public Irep Irep { get; }
-    public int ProgramCounter { get; }
-
-    internal IrepProc(Irep irep, int pc, RClass procClass) : base(procClass)
-    {
-        Irep = irep;
-        ProgramCounter = pc;
-    }
-
-    public override RProc Dup()
-    {
-        var clone = new IrepProc(Irep, ProgramCounter, Class)
-        {
-            Upper = Upper,
-            Scope = Scope,
-        };
-        clone.SetFlag(Flags);
-        return clone;
-    }
-
-    public override bool Equals(RProc? other)
-    {
-        if (other is IrepProc otherProc)
-        {
-            return Irep == otherProc.Irep && ProgramCounter == otherProc.ProgramCounter;
-        }
-        return false;
-    }
-}
-
-public sealed class MethodAliasProc : RProc
-{
-    public Symbol MethodId { get; }
-
-    internal MethodAliasProc(Symbol methodId, RClass procClass) : base(procClass)
-    {
-        MethodId = methodId;
-    }
-
-    public override RProc Dup()
-    {
-        var clone = new MethodAliasProc(MethodId, Class)
-        {
-            Upper = Upper,
-            Scope = Scope,
-        };
-        clone.SetFlag(Flags);
-        return clone;
-    }
-
-    public override bool Equals(RProc? other)
-    {
-        if (other is MethodAliasProc otherProc)
-        {
-            return MethodId == otherProc.MethodId;
-        }
-        return false;
-    }
 }
