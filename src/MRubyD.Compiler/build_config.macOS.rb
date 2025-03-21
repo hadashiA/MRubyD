@@ -2,6 +2,7 @@ MRuby::CrossBuild.new("macos-arm64") do |conf|
   conf.toolchain :clang
 
   conf.gem core: 'mruby-compiler'
+  conf.gem core: 'mruby-bin-mrbc'    
   conf.gem './mrbgems/mrbd-compiler'
 
   conf.disable_presym
@@ -12,7 +13,9 @@ end
 
 MRuby::CrossBuild.new("macos-x64") do |conf|
   conf.toolchain :clang
+  
   conf.gem core: 'mruby-compiler'
+  conf.gem core: 'mruby-bin-mrbc'    
   conf.gem './mrbgems/mrbd-compiler'  
 
   conf.disable_presym
