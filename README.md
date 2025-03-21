@@ -86,9 +86,9 @@ See the [How to compile .mrb ](#compilation) section for information on how to c
 Above `result` is `MRubyValue`. This represents a Ruby value.
 
 ``` cs
-value.IsNil //=> true if integer
-value.IsInteger //=> true if integer
-value.IsFloat //=> true if integer
+value.IsNil //=> true if nol
+value.IsInteger //=> true if integrr
+value.IsFloat //=> true if float
 value.IsSymbol //=> true if Symbol
 value.IsObject //=> true if any allocated object type
 
@@ -156,7 +156,7 @@ var classA = state.DefineClass(Intern("A"u8), c =>
         Console.WriteLine($"foo: {keywordArg}");
         
         // argument type checking
-        state.EnsureValue
+        state.EnsureValueType(keywordArg, MrubyVType.Integer);
         
         var restArguments = state.GetRestArguments();
         for (var i = 0; i < restArguments.Length; i++)
