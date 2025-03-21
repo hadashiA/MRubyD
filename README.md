@@ -13,7 +13,7 @@ MRubyD is a new [mruby](https://github.com/mruby/mruby) virtual machine implemen
 - **High Performance**  
   Takes advantage of modern C# language features—such as managed pointers, `Span`, and the performance benefits of the .NET runtime’s GC and JIT compiler—to deliver superior speed and efficiency.
 
-- **High compatibility with Ruby-level APIs** (Work in progress)
+- **High compatibility with Ruby-level APIs  (Work in progress)**
   It is intended for use in software with a certain amount of resources, such as games. For this reason, we are focusing on Ruby API compatibility.
   At release, all opcodes are implemented and pass the [syntax.rb](https://github.com/mruby/mruby/blob/master/test/t/syntax.rb) tests from the mruby repository.
 
@@ -32,16 +32,16 @@ This release is a preview version and comes with the following constraints:
 
 ### Most recent roadmap
 
-- Implement builtin ruby libs
-- Support Fiber
-- All ruby code port to C# (for performance reason)
-- Unity Integration
-- [VitalRouter.MRuby](https://github.com/hadashiA/VitalRouter) for the new version.
+- [ ] Implement builtin ruby libs
+- [ ] Support Fiber
+- [ ] All ruby code port to C# (for performance reason)
+- [ ] Unity Integration
+- [ ] [VitalRouter.MRuby](https://github.com/hadashiA/VitalRouter) for the new version.
 
 ## Installation
 
 ``` bash
-otnet add package MRubyD
+dotnet add package MRubyD
 ```
 
 ## Basic Usage
