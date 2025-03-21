@@ -171,18 +171,7 @@ partial class MRubyState
     public void AliasMethod(RClass c, Symbol aliasMethodId, Symbol methodId)
     {
         if (aliasMethodId == methodId) return;
-        if (TryFindMethod(c, methodId, out var method, out _))
-        {
-            if (method.Proc is { } originalProc)
-            {
-                var newProc = new MethodAliasProc(methodId, ProcClass)
-                {
-                    Upper = originalProc,
-                    Scope = null!
-                };
-                method = new MRubyMethod(newProc);
-            }
-        }
+        TryFindMethod(c, methodId, out var method, out _);
         DefineMethod(c, aliasMethodId, method);
     }
 

@@ -62,10 +62,10 @@ public class Backtrace
                 MethodId = callInfo.MethodId,
             };
 
-            if (callInfo.Proc is IrepProc irepProc)
+            if (callInfo.Proc is { } proc)
             {
-                location.Irep = irepProc.Irep;
-                location.Index = irepProc.ProgramCounter;
+                location.Irep = proc.Irep;
+                location.Index = proc.ProgramCounter;
             }
             entries.Add(location);
         }

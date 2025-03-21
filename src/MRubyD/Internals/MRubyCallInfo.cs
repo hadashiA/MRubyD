@@ -79,7 +79,7 @@ struct MRubyCallInfo
         get
         {
             var numberOfRegisters = BlockArgumentOffset + 1; // self + args + kargs + blk
-            if (Proc is IrepProc p && p.Irep.RegisterVariableCount > numberOfRegisters)
+            if (Proc is { } p && p.Irep.RegisterVariableCount > numberOfRegisters)
             {
                 return p.Irep.RegisterVariableCount;
             }
