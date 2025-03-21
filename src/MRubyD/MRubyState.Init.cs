@@ -56,6 +56,8 @@ public partial class MRubyState
     readonly VariableTable globalVariables = new();
     readonly MRubyValueEqualityComparer valueEqualityComparer;
 
+    RiteParser? riteParser;
+
     // TODO:
     // readonly (RClass, MRubyMethod)[] methodCacheEntries = new (RClass, MRubyMethod)[MethodCacheSize];
 
@@ -392,12 +394,12 @@ public partial class MRubyState
 
     void InitMrbLib()
     {
-        var parser = new RiteParser(this);
+        riteParser ??= new RiteParser(this);
         var executingDir = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
         foreach (var path in Directory.EnumerateFiles(executingDir!, "*.mrb", SearchOption.AllDirectories))
         {
             var bytes = File.ReadAllBytes(path);
-            var irep = parser.Parse(bytes);
+            var irep = riteParser.Parse(bytes);
             Exec(irep);
         }
     }

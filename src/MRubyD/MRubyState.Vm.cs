@@ -228,7 +228,7 @@ partial class MRubyState
 
     public MRubyValue Exec(ReadOnlySpan<byte> bytecode)
     {
-        var riteParser = new RiteParser(this);
+        riteParser ??= new RiteParser(this);
         var irep = riteParser.Parse(bytecode);
         return Exec(irep);
     }
