@@ -6,6 +6,14 @@ namespace MRubyD.Compiler;
 
 public class MRubyCompileException(string message) : Exception(message);
 
+// public static class MRubyStateExtensions
+// {
+//     public static MRubyValue Evaluate(this MRubyState state, ReadOnlySpan<char> rubySourceCode)
+//     {
+//
+//     }
+// }
+
 public record MRubyCompileOptions
 {
     public static MRubyCompileOptions Default { get; set; } = new();

@@ -152,6 +152,25 @@ static class ArrayMembers
         return MRubyValue.True;
     });
 
+    [MRubyMethod(RequiredArguments = 1)]
+    public static MRubyMethod OpAdd = new((state, self) =>
+    {
+        var array = self.As<RArray>();
+        var other = state.GetArg(0);
+        state.EnsureValueType(other, MRubyVType.Array);
+
+        var otherArray = other.As<RArray>();
+
+        var newLength = array.Length + otherArray.Length;
+        var newArray = state.NewArray(newLength);
+        newArray.EnsureModifiable(newLength, true);
+
+        var span = newArray.AsSpan();
+        array.AsSpan().CopyTo(span);
+        otherArray.AsSpan().CopyTo(span[array.Length..]);
+        return MRubyValue.From(newArray);
+    });
+
     public static MRubyMethod ReverseBang = new((state, self) =>
     {
         var array = self.As<RArray>();

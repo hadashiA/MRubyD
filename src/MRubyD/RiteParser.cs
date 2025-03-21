@@ -1,3 +1,4 @@
+using System;
 using System.Buffers.Binary;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -11,7 +12,7 @@ public class RiteParseException(string message) : Exception(message)
 }
 
 [StructLayout(LayoutKind.Sequential)]
-unsafe ref struct RiteBinaryHeader
+unsafe struct RiteBinaryHeader
 {
     public static readonly int Size = Unsafe.SizeOf<RiteBinaryHeader>();
 
@@ -24,7 +25,7 @@ unsafe ref struct RiteBinaryHeader
 }
 
 [StructLayout(LayoutKind.Sequential)]
-unsafe ref struct RiteSectionHeader
+unsafe struct RiteSectionHeader
 {
     public static readonly int Size = Unsafe.SizeOf<RiteSectionHeader>();
 
@@ -33,7 +34,7 @@ unsafe ref struct RiteSectionHeader
 }
 
 [StructLayout(LayoutKind.Sequential)]
-unsafe ref struct RiteSectionIrepHeader
+unsafe struct RiteSectionIrepHeader
 {
     public static readonly int Size = Unsafe.SizeOf<RiteSectionIrepHeader>();
 

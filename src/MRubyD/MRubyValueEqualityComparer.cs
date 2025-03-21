@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace MRubyD;
 
 public class MRubyValueEqualityComparer(MRubyState state) : IEqualityComparer<MRubyValue>

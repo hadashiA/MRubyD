@@ -1,3 +1,5 @@
+using System;
+
 namespace MRubyD;
 
 [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = false)]

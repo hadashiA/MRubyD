@@ -1,3 +1,5 @@
+using System;
+using System.IO;
 using System.Runtime.CompilerServices;
 using MRubyD.Internals;
 using MRubyD.StdLib;
@@ -351,6 +353,7 @@ public partial class MRubyState
         DefineMethod(ArrayClass, Names.OpEq, ArrayMembers.OpEq);
         DefineMethod(ArrayClass, Names.QEql, ArrayMembers.Eql);
         DefineMethod(ArrayClass, Names.OpLShift, ArrayMembers.Push);
+        DefineMethod(ArrayClass, Names.OpAdd, ArrayMembers.OpAdd);
         DefineMethod(ArrayClass, Names.Initialize, ArrayMembers.Initialize);
         DefineMethod(ArrayClass, Intern("push"u8), ArrayMembers.Push);
         DefineMethod(ArrayClass, Intern("size"u8), ArrayMembers.Size);

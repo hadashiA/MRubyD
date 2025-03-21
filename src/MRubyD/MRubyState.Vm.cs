@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using MRubyD.Internals;
 using MRubyD.StdLib;
@@ -221,6 +224,13 @@ partial class MRubyState
         }
 
         return Exec(irepProc.Irep, irepProc.ProgramCounter, nextCallInfo.BlockArgumentOffset + 1);
+    }
+
+    public MRubyValue Exec(ReadOnlySpan<byte> bytecode)
+    {
+        var riteParser = new RiteParser(this);
+        var irep = riteParser.Parse(bytecode);
+        return Exec(irep);
     }
 
     public MRubyValue Exec(Irep irep)

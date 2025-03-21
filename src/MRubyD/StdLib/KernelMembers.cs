@@ -1,3 +1,5 @@
+using System;
+
 namespace MRubyD.StdLib;
 
 static class KernelMembers

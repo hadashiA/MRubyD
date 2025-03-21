@@ -16,11 +16,14 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Content Include=".\mruby\build\macos-arm64\lib\libmruby.dylib">
-        <Link>runtimes\osx-arm64\native\libmruby.dylib</Link>
-        <PackagePath>runtimes\osx-arm64\native\libmruby.dylib</PackagePath>
-        <Pack>true</Pack>
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
+        <NativeLibs Include="runtimes\**\*.dll*" />
+        <NativeLibs Include="runtimes\**\*.so" />
+        <NativeLibs Include="runtimes\**\*.a" />
+        <NativeLibs Include="runtimes\**\*.dylib" />
+        <None Include="@(NativeLibs)">
+            <Pack>true</Pack>
+            <PackageCopyToOutput>true</PackageCopyToOutput>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
     </ItemGroup>
 </Project>

@@ -1,9 +1,14 @@
+using System;
+
 namespace MRubyD;
 
 public sealed class ClassDefineOptions(MRubyState state, RClass c)
 {
-    public void DefineMethod(Symbol id, MRubyMethod method) =>
-        state.DefineMethod(c, id, method);
+    public void DefineMethod(Symbol id, MRubyMethod method) => state.DefineMethod(c, id, method);
+    public void DefineMethod(Symbol id, MRubyFunc func) => state.DefineMethod(c, id, func);
+
+    public void DefineClassMethod(Symbol id, MRubyMethod method) => state.DefineClassMethod(c, id, method);
+    public void DefineClassMethod(Symbol id, MRubyFunc func) => state.DefineClassMethod(c, id, func);
 }
 
 partial class MRubyState
@@ -166,13 +171,13 @@ partial class MRubyState
     public void AliasMethod(RClass c, Symbol aliasMethodId, Symbol methodId)
     {
         if (aliasMethodId == methodId) return;
-        if (!TryFindMethod(c, methodId, out var method, out _))
+        if (TryFindMethod(c, methodId, out var method, out _))
         {
-            if (method.Proc is not MethodAliasProc)
+            if (method.Proc is { } originalProc)
             {
                 var newProc = new MethodAliasProc(methodId, ProcClass)
                 {
-                    Upper = method.Proc,
+                    Upper = originalProc,
                     Scope = null!
                 };
                 method = new MRubyMethod(newProc);
@@ -193,6 +198,11 @@ partial class MRubyState
     public void DefineClassMethod(RClass c, Symbol methodId, MRubyMethod method)
     {
         DefineSingletonMethod(c, methodId, method);
+    }
+
+    public void DefineClassMethod(RClass c, Symbol methodId, MRubyFunc func)
+    {
+        DefineSingletonMethod(c, methodId, new MRubyMethod(func));
     }
 
     public void UndefClassMethod(RClass c, Symbol methodId)
