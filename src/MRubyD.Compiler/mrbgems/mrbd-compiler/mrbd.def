@@ -3,4 +3,6 @@ EXPORTS
     mrb_open
     mrb_close
     mrb_free
+    mrb_load_nstring_cxt
+    mrb_load_nstring
     mrbd_compile

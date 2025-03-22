@@ -91,7 +91,7 @@ public class VmTest
     }
 
     [Test]
-    public void Include()
+    public void ModuleInclude()
     {
         var result = Exec("""
                           module M
@@ -110,7 +110,7 @@ public class VmTest
     }
 
     [Test]
-    public void ClassEval()
+    public void ClassNew()
     {
         var result = Exec("""
                           c = Class.new do
@@ -143,7 +143,7 @@ public class VmTest
     }
 
     [Test]
-    public void Attr()
+    public void DefineAttr()
     {
         var result = Exec("""
                           class Foo
@@ -171,6 +171,41 @@ public class VmTest
                           end
                           """u8);
         Assert.That(result, Is.EqualTo(MRubyValue.Nil));
+    }
+
+    [Test]
+    public void InstanceEval()
+    {
+        var result = Exec("""
+                          class A
+                            attr_reader :x
+                          
+                            def foo
+                              @x = 123
+                            end
+                          end
+                          
+                          a = A.new
+                          a.instance_eval { foo }
+                          a.x
+                          """u8);
+        Assert.That(result, Is.EqualTo(MRubyValue.From(123)));
+    }
+
+    [Test]
+    public void ClassEval()
+    {
+        var result = Exec("""
+                          class A
+                          end
+
+                          A.class_eval do
+                            def foo = 123
+                          end
+                          
+                          A.new.foo
+                          """u8);
+        Assert.That(result, Is.EqualTo(MRubyValue.From(123)));
     }
 
     MRubyValue Exec(ReadOnlySpan<byte> code)

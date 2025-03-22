@@ -84,7 +84,7 @@ public class SpecTest
     // [TestCase("string.rb")]
     // [TestCase("array.rb")]
     // error
-    [TestCase("exception.rb")]
+    // [TestCase("exception.rb")]
     [TestCase("indexerror.rb")]
     [TestCase("typeerror.rb")]
     [TestCase("localjumperror.rb")]

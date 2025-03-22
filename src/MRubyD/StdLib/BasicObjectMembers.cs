@@ -1,5 +1,3 @@
-using System;
-
 namespace MRubyD.StdLib;
 
 static class BasicObjectMembers
@@ -25,7 +23,8 @@ static class BasicObjectMembers
 
     public static MRubyMethod InstanceEval = new((state, self) =>
     {
-        throw new NotImplementedException();
+        var block = state.GetBlockArg(false);
+        return state.EvalUnder(self, block.As<RProc>(), state.SingletonClassOf(self)!);
     });
 
     public static MRubyMethod MethodMissing = new((state, self) =>

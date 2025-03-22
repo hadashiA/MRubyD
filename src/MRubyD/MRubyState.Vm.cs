@@ -271,6 +271,32 @@ partial class MRubyState
         throw new NotSupportedException();
     }
 
+    internal MRubyValue EvalUnder(MRubyValue self, RProc block, RClass c)
+    {
+        ref var callInfo = ref context.CurrentCallInfo;
+        if (callInfo.CallerType == CallerType.MethodCalled)
+        {
+            return YieldWithClass(c, self, [self], block);
+        }
+
+        callInfo.Scope = c;
+        callInfo.Proc = block;
+        callInfo.ProgramCounter = block.ProgramCounter;
+        callInfo.ArgumentCount = 0;
+        callInfo.KeywordArgumentCount = 0;
+        callInfo.MethodId = context.CallStack[context.CallDepth - 1].MethodId;
+
+        var nregs = block.Irep.RegisterVariableCount < 4 ? 4 : block.Irep.RegisterVariableCount;
+        context.ExtendStack(nregs);
+        context.Stack[callInfo.StackPointer] = self;
+        context.Stack[callInfo.StackPointer + 1] = self;
+        context.ClearStack(callInfo.StackPointer + 2, nregs - 2);
+
+        // Popped at the end of an upstream method call such as instance_eval/class_eval, and the above rewritten callInfo is executed.
+        context.PushCallStack();
+        return self;
+    }
+
     /// <summary>
     /// Execute irep assuming the Stack values are placed
     /// </summary>
@@ -872,11 +898,14 @@ partial class MRubyState
 
                             context.PopCallStack();
                             callInfo = ref context.CurrentCallInfo;
+                            irep = callInfo.Proc!.Irep;
+                            registers = context.Stack.AsSpan(callInfo.StackPointer);
+                            sequence = irep.Sequence.AsSpan();
                             goto Next;
                         }
 
                         var irepProc = callInfo.Proc;
-                        irep = irepProc.Irep;
+                        irep = irepProc!.Irep;
                         callInfo.ProgramCounter = irepProc.ProgramCounter;
 
                         context.ExtendStack(callInfo.StackPointer + (irep.RegisterVariableCount < 4 ? 4 : irep.RegisterVariableCount) + 1);

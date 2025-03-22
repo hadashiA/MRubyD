@@ -73,7 +73,8 @@ static class ModuleMembers
     [MRubyMethod(RestArguments = true)]
     public static MRubyMethod ClassEval = new((state, self) =>
     {
-        throw new NotImplementedException();
+        var block = state.GetBlockArg(false);
+        return state.EvalUnder(self, block.As<RProc>(), self.As<RClass>());
     });
 
     [MRubyMethod(RestArguments = true)]
