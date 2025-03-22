@@ -1,0 +1,22 @@
+name: Test
+
+on:
+  push:
+    branches:
+    - "main"
+  pull_request:
+    branches:
+    - "main"
+
+jobs:
+  test-dotnet:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: |
+            9.0.x
+      - run: dotnet build -c Debug
+      - run: dotnet test -c Debug --no-build
