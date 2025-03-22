@@ -139,7 +139,7 @@ static class ModuleMembers
         {
             var v = mod.InstanceVariables.Get(Names.AttachedKey);
             return MRubyValue.From(v.VType.IsClass()
-                ? state.NewString($"<Class:{state.Inspect(v)}>")
+                ? state.NewString($"<Class:{state.InspectObject(v)}>")
                 : state.NewString($"<Class:{state.StringifyAny(v)}>"));
         }
 

@@ -384,13 +384,19 @@ public partial class MRubyState
         DefineMethod(RangeClass, Intern("begin"u8), RangeMembers.Begin);
         DefineMethod(RangeClass, Intern("end"u8), RangeMembers.End);
         DefineMethod(RangeClass, Intern("exclude_end?"u8), RangeMembers.ExcludeEnd);
+        DefineMethod(RangeClass, Names.OpEq, RangeMembers.OpEq);
+        DefineMethod(RangeClass, Names.OpEqq, RangeMembers.IsInclude);
+        DefineMethod(RangeClass, Names.QInclude, RangeMembers.IsInclude);
+        DefineMethod(RangeClass, Intern("member?"u8), RangeMembers.IsInclude);
+        DefineMethod(RangeClass, Names.ToS, RangeMembers.ToS);
+        DefineMethod(RangeClass, Names.Inspect, RangeMembers.Inspect);
     }
 
-    void InitComparable()
-    {
-        var comparableModule = DefineModule(Intern("Comparable"u8), ObjectClass);
-        // DefineMethod(comparableModule, Names.OpEq);
-    }
+    // void InitComparable()
+    // {
+    //     var comparableModule = DefineModule(Intern("Comparable"u8), ObjectClass);
+    //     // DefineMethod(comparableModule, Names.OpEq);
+    // }
 
     void InitMrbLib()
     {

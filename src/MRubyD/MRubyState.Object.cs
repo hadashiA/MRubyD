@@ -184,6 +184,26 @@ partial class MRubyState
         return false;
     }
 
+    public int ValueCompare(MRubyValue a, MRubyValue b)
+    {
+        switch (a.VType)
+        {
+            case MRubyVType.Integer:
+            case MRubyVType.Float:
+                return NumberCompare(a, b);
+            case MRubyVType.String:
+                if (b.Object is RString bStr)
+                {
+                    return a.As<RString>().CompareTo(bStr);
+                }
+                return -2;
+            default:
+                var result = Send(a, Names.OpCmp, b);
+                if (result.IsInteger) return (int)result.IntegerValue;
+                return -2;
+        }
+    }
+
     public RString Stringify(MRubyValue value)
     {
         switch (value.VType)
@@ -211,16 +231,6 @@ partial class MRubyState
             ? Utf8String.Format($"#<{className}>")
             : Utf8String.Format($"#<{className}:{value.Object!.GetHashCode()}>");
         return NewStringOwned(rawString);
-    }
-
-    public RString Inspect(MRubyValue value)
-    {
-        var v = Send(value, Names.Inspect);
-        if (v.VType == MRubyVType.String)
-        {
-            return v.As<RString>();
-        }
-        return Stringify(value);
     }
 
     public MRubyValue GetInstanceVariable(MRubyValue obj, Symbol key)
@@ -429,27 +439,6 @@ partial class MRubyState
         return default; // not reached
     }
 
-    MRubyValue ConvertType(MRubyValue value, MRubyVType vtype, Symbol convertMethodId)
-    {
-        if (!RespondTo(value, convertMethodId))
-        {
-            Raise(Names.TypeError, NewString($"can't convert type {value.VType} into {vtype}"));
-            return MRubyValue.Nil;
-        }
-        return Send(value, convertMethodId);
-    }
-
-    RString StringifyModule(RClass c)
-    {
-        if (c.VType == MRubyVType.SClass)
-        {
-            var v = c.InstanceVariables.Get(Names.AttachedKey);
-            var str = v.VType == MRubyVType.Class ? StringifyAny(v) : Stringify(v);
-            return NewString($"#<Class:{str}>");
-        }
-        return NameOf(c);
-    }
-
     internal RString StringifyInteger(MRubyValue value, int bases)
     {
         if (bases is not (2 or 10 or 16))
@@ -472,5 +461,45 @@ partial class MRubyState
             buf = stackalloc byte[buf.Length * 2];
         }
         return NewString(buf[..bytesWritten]);
+    }
+
+    MRubyValue ConvertType(MRubyValue value, MRubyVType vtype, Symbol convertMethodId)
+    {
+        if (!RespondTo(value, convertMethodId))
+        {
+            Raise(Names.TypeError, NewString($"can't convert type {value.VType} into {vtype}"));
+            return MRubyValue.Nil;
+        }
+        return Send(value, convertMethodId);
+    }
+
+    RString StringifyModule(RClass c)
+    {
+        if (c.VType == MRubyVType.SClass)
+        {
+            var v = c.InstanceVariables.Get(Names.AttachedKey);
+            var str = v.VType == MRubyVType.Class ? StringifyAny(v) : Stringify(v);
+            return NewString($"#<Class:{str}>");
+        }
+        return NameOf(c);
+    }
+
+    int NumberCompare(MRubyValue a, MRubyValue b)
+    {
+        if (a.IsInteger && b.IsInteger)
+        {
+            return a.IntegerValue.CompareTo(b.IntegerValue);
+        }
+
+        if (b is { IsInteger: false, IsFloat: false })
+        {
+            var result = Send(b, Names.OpCmp, a);
+            if (!result.IsInteger) return -2;
+            return (int)-result.IntegerValue;
+        }
+
+        var x = ToFloat(a);
+        var y = ToFloat(b);
+        return x.CompareTo(y);
     }
 }

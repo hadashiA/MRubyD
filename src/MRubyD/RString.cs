@@ -179,6 +179,14 @@ public class RString : RObject, ISpanFormattable, IUtf8SpanFormattable, IEquatab
         Length = newLength;
     }
 
+    // TODO:
+    public int CompareTo(RString other)
+    {
+        var a = Encoding.UTF8.GetString(AsSpan());
+        var b = Encoding.UTF8.GetString(other.AsSpan());
+        return string.CompareOrdinal(a, b);
+    }
+
     public string ToString(string? format, IFormatProvider? formatProvider)
     {
         FormattableString formattable =
