@@ -23,7 +23,7 @@ public partial class MRubyState
         mrb.InitHash();
         mrb.InitRange();
         // mrb.InitEnumerable();
-        mrb.InitComparable();
+        // mrb.InitComparable();
         mrb.InitMrbLib();
         return mrb;
     }

@@ -92,6 +92,20 @@ def assert_raise(*exc)
   end
 end
 
+def assert_nothing_raised(msg = nil)
+  begin
+    yield
+  rescue Exception => e
+    diff = "    Exception raised:\n" \
+           "    Class: <#{e.class}>\n" \
+           "    Message: <#{e}>"
+    flunk(msg, diff)
+    $asserts.push [false, msg, diff]
+  else
+    $asserts.push [true, msg]
+  end
+end
+
 def _eval_assertion(meth, exp, act_or_msg, msg, block)
   if block
     exp, act, msg = exp, block.call, act_or_msg

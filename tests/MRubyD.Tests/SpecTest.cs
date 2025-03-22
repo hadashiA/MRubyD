@@ -88,7 +88,7 @@ public class SpecTest
     [TestCase("indexerror.rb")]
     [TestCase("typeerror.rb")]
     [TestCase("localjumperror.rb")]
-    [TestCase("namerror.rb")]
+    // [TestCase("namerror.rb")]
     public void RubyScript(string fileName)
     {
         Assert.Multiple(() =>

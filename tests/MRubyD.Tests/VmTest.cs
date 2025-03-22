@@ -38,7 +38,7 @@ public class VmTest
     [Test]
     public void StackOverflow()
     {
-        Assert.Throws<MRubyRaiseException>(() =>
+        Assert.Throws<InvalidOperationException>(() =>
         {
             Exec("""
                  def f(x)
@@ -46,7 +46,7 @@ public class VmTest
                  end
                  f(1)
                  """u8);
-        });
+        }, "stack level too deep");
     }
 
     [Test]

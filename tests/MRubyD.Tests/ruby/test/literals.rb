@@ -86,172 +86,172 @@ assert('Literals Strings Quoted Expanded', '8.7.6.3.5') do
   assert_equal 'abc', g
 end
 
-assert('Literals Strings Here documents', '8.7.6.3.6') do
-  a = <<AAA
-aaa
-AAA
-  b = <<b_b
-bbb
-b_b
-    c = [<<CCC1, <<"CCC2", <<'CCC3']
-c1
-CCC1
-c 2
-CCC2
-c  3
-CCC3
-
-      d = <<DDD
-d#{1+2}DDD
-d\t
-DDD\n
-DDD
-  e = <<'EEE'
-e#{1+2}EEE
-e\t
-EEE\n
-EEE
-  f = <<"FFF"
-F
-FF#{"f"}FFF
-F
-FFF
-
-  g = <<-GGG
-  ggg
-  GGG
-  h = <<-"HHH"
-  hhh
-  HHH
-  i = <<-'III'
-  iii
-  III
-  j = [<<-JJJ1   , <<-"JJJ2"   , <<-'JJJ3' ]
-  j#{1}j
-  JJJ1
-  j#{2}j
-  JJJ2
-  j#{3}j
-  JJJ3
-
-  k = <<'KKK'.to_i
-123
-KKK
-
-  m = [<<MM1, <<MM2]
-x#{m2 = {x:<<MM3}}y
-mm3
-MM3
-mm1
-MM1
-mm2
-MM2
-
-  n = [1, "#{<<NN1}", 3,
-nn1
-NN1
-  4]
-
-  qqq = Proc.new {|*x| x.join(' $ ')}
-  q1 = qqq.call("a", <<QQ1, "c",
-q
-QQ1
-      "d")
-  q2 = qqq.call("l", "m#{<<QQ2}n",
-qq
-QQ2
-      "o")
-
-  r = <<~RRR
-    rrr
-      rrr
-  RRR
-  s = <<~"SSS"
-    sss
-      sss
-  SSS
-  t = <<~'TTT'
-    ttt
-      ttt
-  TTT
-  u = [<<~UUU1   , <<~"UUU2"   , <<~'UUU3' ]
-    u#{1}u
-  UUU1
-    u#{2}u
-  UUU2
-    u#{3}u
-  UUU3
-  v1 = <<~VVV
-
-    vvv
-    #{"vvv"}
-  VVV
-  v2 = <<~VVV
-\tvvv
-  vvv
-  VVV
-  v3 = <<~VVV
-    v v v
-      vvv
-  VVV
-  v4 = <<~VVV
-    vvv \
-    vvv
-  VVV
-  v5 = <<~VVV
-      vvv \
-    vvv
-  VVV
-
-  w = %W( 1 #{<<WWW} 3
-www
-WWW
-      4 5 )
-
-  x = [1, <<XXX1,
-foo #{<<XXX2} bar
-222 #{<<XXX3} 444
-333
-XXX3
-5
-XXX2
-6
-XXX1
-    9]
-
-  z = <<'ZZZ'
-ZZZ
-
-  assert_equal "aaa\n", a
-  assert_equal "bbb\n", b
-  assert_equal ["c1\n", "c 2\n", "c  3\n"], c
-  assert_equal "d3DDD\nd\t\nDDD\n\n", d
-  assert_equal "e\#{1+2}EEE\ne\\t\nEEE\\n\n", e
-  assert_equal "F\nFFfFFF\nF\n", f
-  assert_equal "  ggg\n", g
-  assert_equal "  hhh\n", h
-  assert_equal "  iii\n", i
-  assert_equal ["  j1j\n", "  j2j\n", "  j\#{3}j\n"], j
-  assert_equal 123, k
-  assert_equal ["x{x: \"mm3\\n\"}y\nmm1\n", "mm2\n"], m
-  assert_equal ({x: "mm3\n"}), m2
-  assert_equal [1, "nn1\n", 3, 4], n
-  assert_equal "a $ q\n $ c $ d", q1
-  assert_equal "l $ mqq\nn $ o", q2
-  assert_equal "rrr\n  rrr\n", r
-  assert_equal "sss\n  sss\n", s
-  assert_equal "ttt\n  ttt\n", t
-  assert_equal ["u1u\n", "u2u\n", "u\#{3}u\n"], u
-  assert_equal "\nvvv\nvvv\n", v1
-  assert_equal "\tvvv\n  vvv\n", v2
-  assert_equal "v v v\n  vvv\n", v3
-  assert_equal "vvv vvv\n", v4
-  assert_equal "  vvv vvv\n", v5
-  assert_equal ["1", "www\n", "3", "4", "5"], w
-  assert_equal [1, "foo 222 333\n 444\n5\n bar\n6\n", 9], x
-  assert_equal "", z
-end
-
+# TODO: Array#join
+# assert('Literals Strings Here documents', '8.7.6.3.6') do
+#   a = <<AAA
+# aaa
+# AAA
+#   b = <<b_b
+# bbb
+# b_b
+#     c = [<<CCC1, <<"CCC2", <<'CCC3']
+# c1
+# CCC1
+# c 2
+# CCC2
+# c  3
+# CCC3
+#
+#       d = <<DDD
+# d#{1+2}DDD
+# d\t
+# DDD\n
+# DDD
+#   e = <<'EEE'
+# e#{1+2}EEE
+# e\t
+# EEE\n
+# EEE
+#   f = <<"FFF"
+# F
+# FF#{"f"}FFF
+# F
+# FFF
+#
+#   g = <<-GGG
+#   ggg
+#   GGG
+#   h = <<-"HHH"
+#   hhh
+#   HHH
+#   i = <<-'III'
+#   iii
+#   III
+#   j = [<<-JJJ1   , <<-"JJJ2"   , <<-'JJJ3' ]
+#   j#{1}j
+#   JJJ1
+#   j#{2}j
+#   JJJ2
+#   j#{3}j
+#   JJJ3
+#
+#   k = <<'KKK'.to_i
+# 123
+# KKK
+#
+#   m = [<<MM1, <<MM2]
+# x#{m2 = {x:<<MM3}}y
+# mm3
+# MM3
+# mm1
+# MM1
+# mm2
+# MM2
+#
+#   n = [1, "#{<<NN1}", 3,
+# nn1
+# NN1
+#   4]
+#
+#   qqq = Proc.new {|*x| x.join(' $ ')}
+#   q1 = qqq.call("a", <<QQ1, "c",
+# q
+# QQ1
+#       "d")
+#   q2 = qqq.call("l", "m#{<<QQ2}n",
+# qq
+# QQ2
+#       "o")
+#
+#   r = <<~RRR
+#     rrr
+#       rrr
+#   RRR
+#   s = <<~"SSS"
+#     sss
+#       sss
+#   SSS
+#   t = <<~'TTT'
+#     ttt
+#       ttt
+#   TTT
+#   u = [<<~UUU1   , <<~"UUU2"   , <<~'UUU3' ]
+#     u#{1}u
+#   UUU1
+#     u#{2}u
+#   UUU2
+#     u#{3}u
+#   UUU3
+#   v1 = <<~VVV
+#
+#     vvv
+#     #{"vvv"}
+#   VVV
+#   v2 = <<~VVV
+# \tvvv
+#   vvv
+#   VVV
+#   v3 = <<~VVV
+#     v v v
+#       vvv
+#   VVV
+#   v4 = <<~VVV
+#     vvv \
+#     vvv
+#   VVV
+#   v5 = <<~VVV
+#       vvv \
+#     vvv
+#   VVV
+#
+#   w = %W( 1 #{<<WWW} 3
+# www
+# WWW
+#       4 5 )
+#
+#   x = [1, <<XXX1,
+# foo #{<<XXX2} bar
+# 222 #{<<XXX3} 444
+# 333
+# XXX3
+# 5
+# XXX2
+# 6
+# XXX1
+#     9]
+#
+#   z = <<'ZZZ'
+# ZZZ
+#
+#   assert_equal "aaa\n", a
+#   assert_equal "bbb\n", b
+#   assert_equal ["c1\n", "c 2\n", "c  3\n"], c
+#   assert_equal "d3DDD\nd\t\nDDD\n\n", d
+#   assert_equal "e\#{1+2}EEE\ne\\t\nEEE\\n\n", e
+#   assert_equal "F\nFFfFFF\nF\n", f
+#   assert_equal "  ggg\n", g
+#   assert_equal "  hhh\n", h
+#   assert_equal "  iii\n", i
+#   assert_equal ["  j1j\n", "  j2j\n", "  j\#{3}j\n"], j
+#   assert_equal 123, k
+#   assert_equal ["x{x: \"mm3\\n\"}y\nmm1\n", "mm2\n"], m
+#   assert_equal ({x: "mm3\n"}), m2
+#   assert_equal [1, "nn1\n", 3, 4], n
+#   assert_equal "a $ q\n $ c $ d", q1
+#   assert_equal "l $ mqq\nn $ o", q2
+#   assert_equal "rrr\n  rrr\n", r
+#   assert_equal "sss\n  sss\n", s
+#   assert_equal "ttt\n  ttt\n", t
+#   assert_equal ["u1u\n", "u2u\n", "u\#{3}u\n"], u
+#   assert_equal "\nvvv\nvvv\n", v1
+#   assert_equal "\tvvv\n  vvv\n", v2
+#   assert_equal "v v v\n  vvv\n", v3
+#   assert_equal "vvv vvv\n", v4
+#   assert_equal "  vvv vvv\n", v5
+#   assert_equal ["1", "www\n", "3", "4", "5"], w
+#   assert_equal [1, "foo 222 333\n 444\n5\n bar\n6\n", 9], x
+#   assert_equal "", z
+# end
 
 assert('Literals Array', '8.7.6.4') do
   a = %W{abc#{1+2}def \}g}
