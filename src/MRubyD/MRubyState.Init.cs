@@ -313,6 +313,9 @@ public partial class MRubyState
         DefineClass(Names.FrozenError, StandardErrorClass);
         DefineClass(Names.NotImplementedError, StandardErrorClass);
         DefineClass(Names.LocalJumpError, StandardErrorClass);
+
+        DefineClass(Intern("ScriptError"u8), ExceptionClass);
+        DefineClass(Intern("SyntaxError"u8), ExceptionClass);
     }
 
     void InitNumeric()

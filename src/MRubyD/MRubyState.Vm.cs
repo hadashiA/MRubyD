@@ -162,14 +162,9 @@ partial class MRubyState
             nextCallInfo.CallerType = CallerType.MethodCalled;
             nextCallInfo.ProgramCounter = 0;
 
-            try
-            {
-                return method.Invoke(this, self);
-            }
-            finally
-            {
-                context.PopCallStack();
-            }
+            var result = method.Invoke(this, self);
+            context.PopCallStack();
+            return result;
         }
         else
         {
@@ -236,6 +231,8 @@ partial class MRubyState
             Scope = ObjectClass
         };
 
+        context.UnwindStack();
+
         ref var callInfo = ref context.CurrentCallInfo;
         callInfo.StackPointer = 0;
         callInfo.Proc = proc;
@@ -257,10 +254,10 @@ partial class MRubyState
 
     internal MRubyValue SendMeta(MRubyValue self)
     {
-        ref var callInfo = ref context.CurrentCallInfo;
+        // ref var callInfo = ref context.CurrentCallInfo;
 
         var methodId = GetArgAsSymbol(0);
-        if (callInfo.CallerType != CallerType.VmExecuted)
+        // if (callInfo.CallerType != CallerType.InVmLoop)
         {
             var block = GetBlockArg();
             var args = GetRestArg(1);
@@ -268,7 +265,16 @@ partial class MRubyState
             return Send(self, methodId, args, kargs, block.IsNil ? null : block.As<RProc>());
         }
 
-        throw new NotSupportedException();
+        // var registers = context.Stack.AsSpan(callInfo.StackPointer + 1);
+        // var c = ClassOf(self);
+        // if (!TryFindMethod(c, methodId, out var method, out _) || method == MRubyMethod.Nop)
+        // {
+        //     throw new NotImplementedException();
+        // }
+        //
+        // callInfo.MethodId = methodId;
+        // callInfo.Scope = c;
+
     }
 
     internal MRubyValue EvalUnder(MRubyValue self, RProc block, RClass c)
@@ -2166,9 +2172,10 @@ partial class MRubyState
 
             if (context.CallDepth > 0)
             {
+                var callerType = callInfo.CallerType;
                 context.PopCallStack();
                 callInfo = ref context.CurrentCallInfo;
-                if (callInfo.CallerType == CallerType.VmExecuted)
+                if (callerType == CallerType.VmExecuted)
                 {
                     return false;
                 }

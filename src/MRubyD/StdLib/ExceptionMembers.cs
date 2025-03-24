@@ -57,9 +57,9 @@ static class ExceptionMembers
     {
         var className = state.NameOf(state.ClassOf(self));
         var message = self.As<RException>().Message;
-        if (message != null)
+        if (message is { Length: > 0 })
         {
-            return MRubyValue.From(state.NewString($"{className}: ({message})"));
+            return MRubyValue.From(state.NewString($"{message} ({className})"));
         }
         return MRubyValue.From(className);
     });

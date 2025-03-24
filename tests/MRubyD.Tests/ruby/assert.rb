@@ -99,7 +99,6 @@ def assert_nothing_raised(msg = nil)
     diff = "    Exception raised:\n" \
            "    Class: <#{e.class}>\n" \
            "    Message: <#{e}>"
-    flunk(msg, diff)
     $asserts.push [false, msg, diff]
   else
     $asserts.push [true, msg]

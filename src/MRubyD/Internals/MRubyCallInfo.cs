@@ -217,6 +217,14 @@ class MRubyContext
         return false;
     }
 
+    public void UnwindStack()
+    {
+        while (CallDepth > 0)
+        {
+            PopCallStack();
+        }
+    }
+
     public ref MRubyCallInfo PushCallStack()
     {
         EnsureStackLevel();
