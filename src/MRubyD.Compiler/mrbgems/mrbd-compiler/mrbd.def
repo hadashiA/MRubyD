@@ -3,6 +3,7 @@ EXPORTS
     mrb_open
     mrb_close
     mrb_free
-    mrb_load_nstring_cxt
     mrb_load_nstring
+    mrb_load_irep
+    mrb_load_irep_buf
     mrbd_compile
