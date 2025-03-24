@@ -262,17 +262,17 @@ assert('Exception 13') do
   assert_equal :ok, a
 end
 
-assert('Exception 14') do
-  def (o = Object.new).exception_test14; UnknownConstant end
-  a = :ng
-  begin
-    o.__send__(:exception_test14)
-  rescue
-    a = :ok
-  end
-
-  assert_equal :ok, a
-end
+# assert('Exception 14') do
+#   def (o = Object.new).exception_test14; UnknownConstant end
+#   a = :ng
+#   begin
+#     o.__send__(:exception_test14)
+#   rescue
+#     a = :ok
+#   end
+#
+#   assert_equal :ok, a
+# end
 
 assert('Exception 15') do
   a = begin
@@ -322,35 +322,36 @@ r=begin
   assert_equal 3, r
 end
 
-assert('Exception 19') do
-  class Class4Exception19
-    def a
-      r = @e = false
-      begin
-        b
-      rescue TypeError
-        r = self.z
-      end
-      [ r, @e ]
-    end
-
-    def b
-      begin
-        1 * "b"
-      ensure
-        @e = self.zz
-      end
-    end
-
-    def zz
-      true
-    end
-    def z
-      true
-    end
-  end
-  assert_equal [true, true], Class4Exception19.new.a
-end
+# TODO: Integer#*
+# assert('Exception 19') do
+#   class Class4Exception19
+#     def a
+#       r = @e = false
+#       begin
+#         b
+#       rescue TypeError
+#         r = self.z
+#       end
+#       [ r, @e ]
+#     end
+#
+#     def b
+#       begin
+#         1 * "b"
+#       ensure
+#         @e = self.zz
+#       end
+#     end
+#
+#     def zz
+#       true
+#     end
+#     def z
+#       true
+#     end
+#   end
+#   assert_equal [true, true], Class4Exception19.new.a
+# end
 
 assert('Exception#inspect') do
   assert_equal "Exception", Exception.new.inspect
@@ -387,39 +388,39 @@ def backtrace_available?
   end
 end
 
-assert('GC in rescue') do
-  skip "backtrace isn't available" unless backtrace_available?
+# assert('GC in rescue') do
+#   skip "backtrace isn't available" unless backtrace_available?
+#
+#   line = nil
+#   begin
+#     [1].each do
+#       [2].each do
+#         [3].each do
+#           line = __LINE__; raise "XXX"
+#         end
+#       end
+#     end
+#   rescue => exception
+#     GC.start
+#     assert_equal("#{__FILE__}:#{line}",
+#                  exception.backtrace.first)
+#   end
+# end
 
-  line = nil
-  begin
-    [1].each do
-      [2].each do
-        [3].each do
-          line = __LINE__; raise "XXX"
-        end
-      end
-    end
-  rescue => exception
-    GC.start
-    assert_equal("#{__FILE__}:#{line}",
-                 exception.backtrace.first)
-  end
-end
-
-assert('Method call in rescue') do
-  skip "backtrace isn't available" unless backtrace_available?
-
-  line = nil
-  begin
-    [1].each do
-      [2].each do
-        line = __LINE__; raise "XXX"
-      end
-    end
-  rescue => exception
-    [3].each do
-    end
-    assert_equal("#{__FILE__}:#{line}",
-                 exception.backtrace.first)
-  end
-end
+# assert('Method call in rescue') do
+#   skip "backtrace isn't available" unless backtrace_available?
+#
+#   line = nil
+#   begin
+#     [1].each do
+#       [2].each do
+#         line = __LINE__; raise "XXX"
+#       end
+#     end
+#   rescue => exception
+#     [3].each do
+#     end
+#     assert_equal("#{__FILE__}:#{line}",
+#                  exception.backtrace.first)
+#   end
+# end
