@@ -1,6 +1,8 @@
 using System;
 using System.IO;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using MRubyD.Compiler;
 
 namespace MRubyD.Benchmark;
 
@@ -10,19 +12,25 @@ unsafe class RubyScriptLoader : IDisposable
     public MrbStateNative* MrbStateNative { get; } = NativeMethods.MrbOpen();
 
     bool disposed;
+    readonly MRubyCompiler compiler;
 
-    public byte[] LoadBytecode(string fileName)
+    public RubyScriptLoader()
     {
-        var path = GetAbsolutePath(Path.Join("ruby", fileName));
-        return File.ReadAllBytes(path);
+        compiler = MRubyCompiler.Create(MRubyDState);
     }
 
-    public void RunMRubyD(byte[] bin)
+    public MrbNativeBytesHandle CompileToBinaryFormat(string fileName)
+    {
+        var source = ReadBytes(fileName);
+        return compiler.CompileToBinaryFormat(source);
+    }
+
+    public void RunMRubyD(ReadOnlySpan<byte> bin)
     {
         MRubyDState.Exec(bin);
     }
 
-    public void RunMRubyNative(byte[] bin)
+    public void RunMRubyNative(ReadOnlySpan<byte> bin)
     {
         fixed (byte* ptr = bin)
         {
@@ -51,5 +59,11 @@ unsafe class RubyScriptLoader : IDisposable
     {
         return Path.Join(Path.GetDirectoryName(callerFilePath)!, relativePath);
         // return Path.Join(Assembly.GetEntryAssembly()!.Location, relativePath);
+    }
+
+    byte[] ReadBytes(string fileName)
+    {
+        var path = GetAbsolutePath(Path.Join("ruby", fileName));
+        return File.ReadAllBytes(path);
     }
 }

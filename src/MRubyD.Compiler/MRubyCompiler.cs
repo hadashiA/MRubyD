@@ -53,6 +53,35 @@ public class MRubyCompiler : IDisposable
         return mruby.Exec(Compile(code));
     }
 
+    public unsafe MrbNativeBytesHandle CompileToBinaryFormat(ReadOnlySpan<byte> source)
+    {
+        var mrbPtr = compileStateHandle.DangerousGetPtr();
+        byte* bin = null;
+        var binLength = 0;
+        byte* errorMessageCStr = null;
+        int resultCode;
+        fixed (byte* sourcePtr = source)
+        {
+            resultCode = NativeMethods.MrbdCompile(
+                mrbPtr,
+                sourcePtr,
+                source.Length,
+                &bin,
+                &binLength,
+                &errorMessageCStr);
+        }
+
+        if (resultCode != NativeMethods.Ok)
+        {
+            if (errorMessageCStr != null)
+            {
+                var errorMessage = Marshal.PtrToStringUTF8((IntPtr)errorMessageCStr)!;
+                throw new MRubyCompileException(errorMessage);
+            }
+        }
+        return new MrbNativeBytesHandle(compileStateHandle, (IntPtr)bin, binLength);
+    }
+
     public Irep CompileFile(string filePath)
     {
         var bytes = File.ReadAllBytes(filePath);
