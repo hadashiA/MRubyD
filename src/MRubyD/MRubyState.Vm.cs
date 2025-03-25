@@ -865,7 +865,7 @@ partial class MRubyState
                         {
                             method = PrepareMethodMissing(ref callInfo, self, methodId,
                                 opcode == OpCode.Super
-                                    ? () =>  Raise(Names.NoMethodError, NewString($"no superclass method '{NameOf(methodId)}' for {StringifyAny(self)}"))
+                                    ? static (state,self,methodId) =>  state.Raise(Names.NoMethodError, state.NewString($"no superclass method '{state.NameOf(methodId)}' for {state.StringifyAny(self)}"))
                                     : null);
                         }
 
@@ -2192,7 +2192,7 @@ partial class MRubyState
         ref MRubyCallInfo callInfo,
         MRubyValue receiver,
         Symbol methodId,
-        Action? raise = null)
+        Action<MRubyState,MRubyValue,Symbol>? raise = null)
     {
         var receiverClass = ClassOf(receiver);
         var args = context.GetRestArg(ref callInfo, 0);
@@ -2247,7 +2247,7 @@ partial class MRubyState
         {
             if (raise != null)
             {
-                raise();
+                raise(this,receiver, methodId);
             }
             else
             {
