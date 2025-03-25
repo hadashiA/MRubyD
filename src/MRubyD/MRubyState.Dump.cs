@@ -8,8 +8,133 @@ namespace MRubyD;
 
 partial class MRubyState
 {
-    internal void CodeDump(Irep irep, IBufferWriter<byte> writer)
+    static ReadOnlySpan<byte> GetOpCodeName(OpCode code) =>
+        code switch
+        {
+            OpCode.Nop => "NOP"u8,
+            OpCode.Move => "MOVE"u8,
+            OpCode.LoadL => "LOADL"u8,
+            OpCode.LoadI8 => "LOADI8"u8,
+            OpCode.LoadINeg => "LOADINEG"u8,
+            OpCode.LoadI__1 => "LOADI__1"u8,
+            OpCode.LoadI_0 => "LOADI_0"u8,
+            OpCode.LoadI_1 => "LOADI_1"u8,
+            OpCode.LoadI_2 => "LOADI_2"u8,
+            OpCode.LoadI_3 => "LOADI_3"u8,
+            OpCode.LoadI_4 => "LOADI_4"u8,
+            OpCode.LoadI_5 => "LOADI_5"u8,
+            OpCode.LoadI_6 => "LOADI_6"u8,
+            OpCode.LoadI_7 => "LOADI_7"u8,
+            OpCode.LoadI16 => "LOADI16"u8,
+            OpCode.LoadI32 => "LOADI32"u8,
+            OpCode.LoadSym => "LOADSYM"u8,
+            OpCode.LoadNil => "LOADNIL"u8,
+            OpCode.LoadSelf => "LOADSELF"u8,
+            OpCode.LoadT => "LOADT"u8,
+            OpCode.LoadF => "LOADF"u8,
+            OpCode.GetGV => "GETGV"u8,
+            OpCode.SetGV => "SETGV"u8,
+            OpCode.GetSV => "GETSV"u8,
+            OpCode.SetSV => "SETSV"u8,
+            OpCode.GetIV => "GETIV"u8,
+            OpCode.SetIV => "SETIV"u8,
+            OpCode.GetCV => "GETCV"u8,
+            OpCode.SetCV => "SETCV"u8,
+            OpCode.GetConst => "GETCONST"u8,
+            OpCode.SetConst => "SETCONST"u8,
+            OpCode.GetMCnst => "GETMCNST"u8,
+            OpCode.SetMCnst => "SETMCNST"u8,
+            OpCode.GetUpVar => "GETUPVAR"u8,
+            OpCode.SetUpVar => "SETUPVAR"u8,
+            OpCode.GetIdx => "GETIDX"u8,
+            OpCode.SetIdx => "SETIDX"u8,
+            OpCode.Jmp => "JMP"u8,
+            OpCode.JmpIf => "JMPIF"u8,
+            OpCode.JmpNot => "JMPNOT"u8,
+            OpCode.JmpNil => "JMPNIL"u8,
+            OpCode.JmpUw => "JMPUW"u8,
+            OpCode.Except => "EXCEPT"u8,
+            OpCode.Rescue => "RESCUE"u8,
+            OpCode.RaiseIf => "RAISEIF"u8,
+            OpCode.SSend => "SSEND"u8,
+            OpCode.SSendB => "SSENDB"u8,
+            OpCode.Send => "SEND"u8,
+            OpCode.SendB => "SENDB"u8,
+            OpCode.Call => "CALL"u8,
+            OpCode.Super => "SUPER"u8,
+            OpCode.ArgAry => "ARGARY"u8,
+            OpCode.Enter => "ENTER"u8,
+            OpCode.KeyP => "KEY_P"u8,
+            OpCode.KeyEnd => "KEYEND"u8,
+            OpCode.KArg => "KARG"u8,
+            OpCode.Return => "RETURN"u8,
+            OpCode.ReturnBlk => "RETURN_BLK"u8,
+            OpCode.Break => "BREAK"u8,
+            OpCode.BlkPush => "BLKPUSH"u8,
+            OpCode.Add => "ADD"u8,
+            OpCode.AddI => "ADDI"u8,
+            OpCode.Sub => "SUB"u8,
+            OpCode.SubI => "SUBI"u8,
+            OpCode.Mul => "MUL"u8,
+            OpCode.Div => "DIV"u8,
+            OpCode.EQ => "EQ"u8,
+            OpCode.LT => "LT"u8,
+            OpCode.LE => "LE"u8,
+            OpCode.GT => "GT"u8,
+            OpCode.GE => "GE"u8,
+            OpCode.Array => "ARRAY"u8,
+            OpCode.Array2 => "ARRAY2"u8,
+            OpCode.AryCat => "ARYCAT"u8,
+            OpCode.AryPush => "ARYPUSH"u8,
+            OpCode.ArySplat => "ARYSPLAT"u8,
+            OpCode.ARef => "AREF"u8,
+            OpCode.ASet => "ASET"u8,
+            OpCode.APost => "APOST"u8,
+            OpCode.Intern => "INTERN"u8,
+            OpCode.Symbol => "SYMBOL"u8,
+            OpCode.String => "STRING"u8,
+            OpCode.StrCat => "STRCAT"u8,
+            OpCode.Hash => "HASH"u8,
+            OpCode.HashAdd => "HASHADD"u8,
+            OpCode.HashCat => "HASHCAT"u8,
+            OpCode.Lambda => "LAMBDA"u8,
+            OpCode.Block => "BLOCK"u8,
+            OpCode.Method => "METHOD"u8,
+            OpCode.RangeInc => "RANGE_INC"u8,
+            OpCode.RangeExc => "RANGE_EXC"u8,
+            OpCode.OClass => "OCLASS"u8,
+            OpCode.Class => "CLASS"u8,
+            OpCode.Module => "MODULE"u8,
+            OpCode.Exec => "EXEC"u8,
+            OpCode.Def => "DEF"u8,
+            OpCode.Alias => "ALIAS"u8,
+            OpCode.Undef => "UNDEF"u8,
+            OpCode.SClass => "SCLASS"u8,
+            OpCode.TClass => "TCLASS"u8,
+            OpCode.Debug => "DEBUG"u8,
+            OpCode.Err => "ERR"u8,
+            OpCode.EXT1 => "EXT1"u8,
+            OpCode.EXT2 => "EXT2"u8,
+            OpCode.EXT3 => "EXT3"u8,
+            OpCode.Stop => "STOP"u8,
+
+            OpCode.SendInternal => "SEND_INTERNAL"u8,
+            _ => throw new ArgumentOutOfRangeException(nameof(code), code, null)
+        };
+
+    internal void CodeDump(Irep irep, IBufferWriter<byte> writer, int tabWidth = 4)
     {
+        var longestOpCodeName = "RETURN_BLK"u8.Length;
+        var maxTabCount = (longestOpCodeName) / tabWidth + 1;
+
+        void WriteOpCodeWithTab(OpCode opcode)
+        {
+            var name = GetOpCodeName(opcode);
+            ReadOnlySpan<byte> tabs = "\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t"u8;
+            writer.Write(name);
+            writer.Write(tabs.Slice(0, maxTabCount - (name.Length) / tabWidth));
+        }
+
         void WriteRegister(int n)
         {
             if (n == 0) return;
@@ -93,20 +218,32 @@ partial class MRubyState
                 //TODO: Irep debug info
 
                 var opcode = (OpCode)irep.Sequence[pc];
+                if (opcode is OpCode.Nop or OpCode.Call or OpCode.KeyEnd or OpCode.Stop or OpCode.EXT1 or OpCode.EXT2 or OpCode.EXT3)
+                {
+                    writer.Write(GetOpCodeName(opcode));
+                    writer.Write("\n"u8);
+                    pc++;
+                    continue;
+                }
+
+                {
+                    WriteOpCodeWithTab(opcode);
+                }
+
                 switch (opcode)
                 {
+                    // ReSharper disable UnreachableSwitchCaseDueToIntegerAnalysis
                     case OpCode.Nop:
-                        OperandZ.Read(irep.Sequence, ref pc);
-                        writer.Write("NOP\n"u8);
+
                         break;
                     case OpCode.Move:
                         var bb = OperandBB.Read(irep.Sequence, ref pc);
-                        Format(writer, $"MOVE\t\tR{bb.A}\tR{bb.B}\n");
+                        Format(writer, $"R{bb.A}\tR{bb.B}\n");
                         break;
                     case OpCode.LoadL:
                         {
                             bb = OperandBB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"LOADL\t\tR{bb.A}");
+                            Format(writer, $"R{bb.A}");
                             var value = irep.PoolValues[bb.B];
                             switch (value.VType)
                             {
@@ -126,27 +263,27 @@ partial class MRubyState
                         }
                     case OpCode.LoadI8:
                         bb = OperandBB.Read(irep.Sequence, ref pc);
-                        Format(writer, $"LOADI8\t\tR{bb.A}\t{bb.B}\t");
+                        Format(writer, $"R{bb.A}\t{bb.B}\t");
                         WriteLocalVariableA(bb.A);
                         break;
                     case OpCode.LoadINeg:
                         bb = OperandBB.Read(irep.Sequence, ref pc);
-                        Format(writer, $"LOADINEG\t\tR{bb.A}\t-{bb.B}\t");
+                        Format(writer, $"R{bb.A}\t-{bb.B}\t");
                         WriteLocalVariableA(bb.A);
                         break;
                     case OpCode.LoadI16:
                         var bs = OperandBS.Read(irep.Sequence, ref pc);
-                        Format(writer, $"LOADI16\t\tR{bs.A}\t{bs.B}\t");
+                        Format(writer, $"R{bs.A}\t{bs.B}\t");
                         WriteLocalVariableA(bs.A);
                         break;
                     case OpCode.LoadI32:
                         var bss = OperandBSS.Read(irep.Sequence, ref pc);
-                        Format(writer, $"LOADI32\t\tR{bss.A}\t{((ushort)bss.B << 16) | (ushort)bss.C}\t");
+                        Format(writer, $"R{bss.A}\t{((ushort)bss.B << 16) | (ushort)bss.C}\t");
                         WriteLocalVariableA(bss.A);
                         break;
                     case OpCode.LoadI__1:
                         var b = OperandB.Read(irep.Sequence, ref pc);
-                        Format(writer, $"LOADI__1\t\tR{b.A}\t(-1)\t");
+                        Format(writer, $"tR{b.A}\t(-1)\t");
                         WriteLocalVariableA(b.A);
                         break;
                     case OpCode.LoadI_0:
@@ -160,174 +297,174 @@ partial class MRubyState
                         {
                             b = OperandB.Read(irep.Sequence, ref pc);
                             var value = (int)opcode - (int)OpCode.LoadI_0;
-                            Format(writer, $"LOADI_{value}\t\tR{b.A}\t{value}\t");
+                            Format(writer, $"R{b.A}\t{value}\t");
                             WriteLocalVariableA(b.A);
                             break;
                         }
                     case OpCode.LoadSym:
                         {
                             bb = OperandBB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"LOADSYM\tR{bb.A}\t:{symbolTable.NameOf(irep.Symbols[bb.B])}\t");
+                            Format(writer, $"R{bb.A}\t:{symbolTable.NameOf(irep.Symbols[bb.B])}\t");
                             WriteLocalVariableA(bb.A);
                             break;
                         }
                     case OpCode.LoadNil:
                         {
                             b = OperandB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"LOADNIL\t\tR{b.A}\t(nil)\t");
+                            Format(writer, $"R{b.A}\t(nil)\t");
                             WriteLocalVariableA(b.A);
                             break;
                         }
                     case OpCode.LoadSelf:
                         {
                             b = OperandB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"LOADSELF\tR{b.A}\t(R0)\t");
+                            Format(writer, $"R{b.A}\t(R0)\t");
                             WriteLocalVariableA(b.A);
                             break;
                         }
                     case OpCode.LoadT:
                         {
                             b = OperandB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"LOADT\t\tR{b.A}\t(true)\t");
+                            Format(writer, $"R{b.A}\t(true)\t");
                             WriteLocalVariableA(b.A);
                             break;
                         }
                     case OpCode.LoadF:
                         {
                             b = OperandB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"LOADF\t\tR{b.A}\t(false)\t");
+                            Format(writer, $"R{b.A}\t(false)\t");
                             WriteLocalVariableA(b.A);
                             break;
                         }
                     case OpCode.GetGV:
                         {
                             bb = OperandBB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"GETGV\t\tR{bb.A}\t{symbolTable.NameOf(irep.Symbols[bb.B])}\t");
+                            Format(writer, $"R{bb.A}\t{symbolTable.NameOf(irep.Symbols[bb.B])}\t");
                             WriteLocalVariableA(bb.A);
                             break;
                         }
                     case OpCode.SetGV:
                         {
                             bb = OperandBB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"SETGV\t\t{symbolTable.NameOf(irep.Symbols[bb.B])}\tR{bb.A}\t");
+                            Format(writer, $"{symbolTable.NameOf(irep.Symbols[bb.B])}\tR{bb.A}\t");
                             WriteLocalVariableA(bb.A);
                             break;
                         }
                     case OpCode.GetSV:
                         {
                             bb = OperandBB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"GETSV\t\tR{bb.A}\t{symbolTable.NameOf(irep.Symbols[bb.B])}\t");
+                            Format(writer, $"R{bb.A}\t{symbolTable.NameOf(irep.Symbols[bb.B])}\t");
                             WriteLocalVariableA(bb.A);
                             break;
                         }
                     case OpCode.SetSV:
                         {
                             bb = OperandBB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"SETSV\t\t{symbolTable.NameOf(irep.Symbols[bb.B])}\tR{bb.A}\t");
+                            Format(writer, $"{symbolTable.NameOf(irep.Symbols[bb.B])}\tR{bb.A}\t");
                             WriteLocalVariableA(bb.A);
                             break;
                         }
                     case OpCode.GetConst:
                         {
                             bb = OperandBB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"GETCONST\tR{bb.A}\t{symbolTable.NameOf(irep.Symbols[bb.B])}\t");
+                            Format(writer, $"R{bb.A}\t{symbolTable.NameOf(irep.Symbols[bb.B])}\t");
                             WriteLocalVariableA(bb.A);
                             break;
                         }
                     case OpCode.SetConst:
                         {
                             bb = OperandBB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"SETCONST\t{symbolTable.NameOf(irep.Symbols[bb.B])}\tR{bb.A}\t");
+                            Format(writer, $"{symbolTable.NameOf(irep.Symbols[bb.B])}\tR{bb.A}\t");
                             WriteLocalVariableA(bb.A);
                             break;
                         }
                     case OpCode.GetMCnst:
                         {
                             bb = OperandBB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"GETMCNST\tR{bb.A}\tR{bb.A}::{symbolTable.NameOf(irep.Symbols[bb.B])}\t");
+                            Format(writer, $"R{bb.A}\tR{bb.A}::{symbolTable.NameOf(irep.Symbols[bb.B])}\t");
                             WriteLocalVariableA(bb.A);
                             break;
                         }
                     case OpCode.SetMCnst:
                         {
                             bb = OperandBB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"SETMCNST\tR{bb.A}::{symbolTable.NameOf(irep.Symbols[bb.B])}\tR{bb.A}\t");
+                            Format(writer, $"R{bb.A}::{symbolTable.NameOf(irep.Symbols[bb.B])}\tR{bb.A}\t");
                             WriteLocalVariableA(bb.A);
                             break;
                         }
                     case OpCode.GetIV:
                         {
                             bb = OperandBB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"GETIV\t\tR{bb.A}\t{symbolTable.NameOf(irep.Symbols[bb.B])}\t");
+                            Format(writer, $"R{bb.A}\t{symbolTable.NameOf(irep.Symbols[bb.B])}\t");
                             WriteLocalVariableA(bb.A);
                             break;
                         }
                     case OpCode.SetIV:
                         {
                             bb = OperandBB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"SETIV\t\t{symbolTable.NameOf(irep.Symbols[bb.B])}\tR{bb.A}\t");
+                            Format(writer, $"{symbolTable.NameOf(irep.Symbols[bb.B])}\tR{bb.A}\t");
                             WriteLocalVariableA(bb.A);
                             break;
                         }
                     case OpCode.GetUpVar:
                         var bbb = OperandBBB.Read(irep.Sequence, ref pc);
                     {
-                        Format(writer, $"GETUPVAR\tR{bbb.A}\t{bbb.B}\t{bbb.C}\t");
+                        Format(writer, $"R{bbb.A}\t{bbb.B}\t{bbb.C}\t");
                         WriteLocalVariableA(bbb.A);
                         break;
                     }
                     case OpCode.SetUpVar:
                         {
                             bbb = OperandBBB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"SETUPVAR\tR{bbb.A}\t{bbb.B}\t{bbb.C}\t");
+                            Format(writer, $"R{bbb.A}\t{bbb.B}\t{bbb.C}\t");
                             WriteLocalVariableA(bbb.A);
                             break;
                         }
                     case OpCode.GetCV:
                         {
                             bb = OperandBB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"GETCV\t\tR{bb.A}\t{symbolTable.NameOf(irep.Symbols[bb.B])}\t");
+                            Format(writer, $"R{bb.A}\t{symbolTable.NameOf(irep.Symbols[bb.B])}\t");
                             WriteLocalVariableA(bb.A);
                             break;
                         }
                     case OpCode.SetCV:
                         {
                             bb = OperandBB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"SETCV\t\t{symbolTable.NameOf(irep.Symbols[bb.B])}\tR{bb.A}\t");
+                            Format(writer, $"{symbolTable.NameOf(irep.Symbols[bb.B])}\tR{bb.A}\t");
                             WriteLocalVariableA(bb.A);
                             break;
                         }
                     case OpCode.GetIdx:
                         {
                             b = OperandB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"GETIDX\tR{b.A}\tR{b.A + 1}\n");
+                            Format(writer, $"R{b.A}\tR{b.A + 1}\n");
                             break;
                         }
                     case OpCode.SetIdx:
                         {
                             b = OperandB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"SETIDX\tR{b.A}\tR{b.A + 1}\tR{b.A + 2}\n");
+                            Format(writer, $"R{b.A}\tR{b.A + 1}\tR{b.A + 2}\n");
                             break;
                         }
                     case OpCode.Jmp:
                         {
                             var s = OperandS.Read(irep.Sequence, ref pc);
                             var i = pc;
-                            Format(writer, $"JMP\t\t{i + s.A}\n");
+                            Format(writer, $"{i + s.A}\n");
                             break;
                         }
                     case OpCode.JmpUw:
                         {
                             var s = OperandS.Read(irep.Sequence, ref pc);
                             var i = pc;
-                            Format(writer, $"JMPUW\t\t{i + s.A}\n");
+                            Format(writer, $"{i + s.A}\n");
                             break;
                         }
                     case OpCode.JmpIf:
                         {
                             bs = OperandBS.Read(irep.Sequence, ref pc);
                             var i = pc;
-                            Format(writer, $"JMPIF\t\tR{bs.A}\t{i + bs.B}\t");
+                            Format(writer, $"R{bs.A}\t{i + bs.B}\t");
                             WriteLocalVariableA(bs.A);
                             break;
                         }
@@ -335,7 +472,7 @@ partial class MRubyState
                         {
                             bs = OperandBS.Read(irep.Sequence, ref pc);
                             var i = pc;
-                            Format(writer, $"JMPNOT\t\tR{bs.A}\t{i + bs.B}\t");
+                            Format(writer, $"R{bs.A}\t{i + bs.B}\t");
                             WriteLocalVariableA(bs.A);
                             break;
                         }
@@ -343,372 +480,335 @@ partial class MRubyState
                         {
                             bs = OperandBS.Read(irep.Sequence, ref pc);
                             var i = pc;
-                            Format(writer, $"JMPNIL\tR{bs.A}\t{i + bs.B}\t");
+                            Format(writer, $"R{bs.A}\t{i + bs.B}\t");
                             WriteLocalVariableA(bs.A);
                             break;
                         }
                     case OpCode.SSend:
                         {
                             bbb = OperandBBB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"SSEND\t\tR{bbb.A}\t:{symbolTable.NameOf(irep.Symbols[bbb.B])}\t");
+                            Format(writer, $"R{bbb.A}\t:{symbolTable.NameOf(irep.Symbols[bbb.B])}\t");
                             WriteLocalVariableA(bbb.A);
                             break;
                         }
                     case OpCode.SSendB:
                         {
                             bbb = OperandBBB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"SSENDB\tR{bbb.A}\t:{symbolTable.NameOf(irep.Symbols[bbb.B])}\t");
+                            Format(writer, $"R{bbb.A}\t:{symbolTable.NameOf(irep.Symbols[bbb.B])}\t");
                             WriteLocalVariableA(bbb.A);
                             break;
                         }
                     case OpCode.Send:
                         {
                             bbb = OperandBBB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"SEND\t\tR{bbb.A}\t:{symbolTable.NameOf(irep.Symbols[bbb.B])}\t");
+                            Format(writer, $"R{bbb.A}\t:{symbolTable.NameOf(irep.Symbols[bbb.B])}\t");
                             WriteLocalVariableA(bbb.A);
                             break;
                         }
                     case OpCode.SendB:
                         {
                             bbb = OperandBBB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"SENDB\t\tR{bbb.A}\t:{symbolTable.NameOf(irep.Symbols[bbb.B])}\t");
+                            Format(writer, $"R{bbb.A}\t:{symbolTable.NameOf(irep.Symbols[bbb.B])}\t");
                             WriteLocalVariableA(bbb.A);
                             break;
                         }
                     case OpCode.Call:
                         {
-                            OperandZ.Read(irep.Sequence, ref pc);
-                            writer.Write("CALL\n"u8);
                             break;
                         }
                     case OpCode.Super:
                         {
                             bb = OperandBB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"SUPER\t\tR{bb.A}\t");
+                            Format(writer, $"R{bb.A}\t");
                             WriteLocalVariableA(bb.A);
                             break;
                         }
                     case OpCode.ArgAry:
                         {
                             bs = OperandBS.Read(irep.Sequence, ref pc);
-                            Format(writer, $"ARGARY\tR{bs.A}\t{(bs.B >> 11) & 0x3f}:{(bs.B >> 10) & 0x1}:{(bs.B >> 5) & 0x1f}:{(bs.B >> 4) & 0x1f} ({bs.B & 0xf})\t");
+                            Format(writer, $"R{bs.A}\t{(bs.B >> 11) & 0x3f}:{(bs.B >> 10) & 0x1}:{(bs.B >> 5) & 0x1f}:{(bs.B >> 4) & 0x1f} ({bs.B & 0xf})\t");
                             WriteLocalVariableA(bs.A);
                             break;
                         }
                     case OpCode.Enter:
                         {
                             var a = OperandW.Read(irep.Sequence, ref pc).A;
-                            Format(writer, $"ENTER\t\t{(a >> 18) & 0x1f}:{(a >> 13) & 0x1f}:{(a >> 12) & 0x1}:{(a >> 7) & 0x1f}:{(a >> 2) & 0x1f}:{(a >> 1) & 0x1}:{a & 1} (0x{a:x})\n");
+                            Format(writer, $"{(a >> 18) & 0x1f}:{(a >> 13) & 0x1f}:{(a >> 12) & 0x1}:{(a >> 7) & 0x1f}:{(a >> 2) & 0x1f}:{(a >> 1) & 0x1}:{a & 1} (0x{a:x})\n");
                             break;
                         }
                     case OpCode.KeyP:
                         {
                             bb = OperandBB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"KEY_P\t\tR{bb.A}\t:{symbolTable.NameOf(irep.Symbols[bb.B])}\t");
+                            Format(writer, $"R{bb.A}\t:{symbolTable.NameOf(irep.Symbols[bb.B])}\t");
                             WriteLocalVariableA(bb.A);
                             break;
                         }
                     case OpCode.KeyEnd:
                         {
                             OperandZ.Read(irep.Sequence, ref pc);
-                            writer.Write("KEYEND\n"u8);
                             break;
                         }
                     case OpCode.KArg:
                         {
                             bb = OperandBB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"KARG\t\tR{bb.A}\t:{symbolTable.NameOf(irep.Symbols[bb.B])}\t");
+                            Format(writer, $"R{bb.A}\t:{symbolTable.NameOf(irep.Symbols[bb.B])}\t");
                             WriteLocalVariableA(bb.A);
                             break;
                         }
                     case OpCode.Return:
                         {
                             b = OperandB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"RETURN\t\tR{b.A}\t\t");
+                            Format(writer, $"R{b.A}\t\t");
                             WriteLocalVariableA(b.A);
                             break;
                         }
                     case OpCode.ReturnBlk:
                         {
                             b = OperandB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"RETURN_BLK\tR{b.A}\t\t");
+                            Format(writer, $"R{b.A}\t\t");
                             WriteLocalVariableA(b.A);
                             break;
                         }
                     case OpCode.Break:
                         {
                             b = OperandB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"BREAK\t\tR{b.A}\t\t");
+                            Format(writer, $"R{b.A}\t\t");
                             WriteLocalVariableA(b.A);
                             break;
                         }
                     case OpCode.BlkPush:
                         {
                             bs = OperandBS.Read(irep.Sequence, ref pc);
-                            Format(writer, $"BLKPUSH\t\tR{bs.A}\t{(bs.B >> 11) & 0x3f}:{(bs.B >> 10) & 0x1}:{(bs.B >> 5) & 0x1f}:{(bs.B >> 4) & 0x1} ({(bs.B >> 0) & 0xf})\t");
+                            Format(writer, $"R{bs.A}\t{(bs.B >> 11) & 0x3f}:{(bs.B >> 10) & 0x1}:{(bs.B >> 5) & 0x1f}:{(bs.B >> 4) & 0x1} ({(bs.B >> 0) & 0xf})\t");
                             WriteLocalVariableA(bs.A);
                             break;
                         }
                     case OpCode.Lambda:
                         {
                             bb = OperandBB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"LAMBDA\t\tR{bb.A}\tI[{bb.B}]\n");
+                            Format(writer, $"R{bb.A}\tI[{bb.B}]\n");
                             break;
                         }
                     case OpCode.Block:
                         {
                             bb = OperandBB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"BLOCK\t\tR{bb.A}\tI[{bb.B}]\n");
+                            Format(writer, $"R{bb.A}\tI[{bb.B}]\n");
                             break;
                         }
                     case OpCode.Method:
                         {
                             bb = OperandBB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"METHOD\t\tR{bb.A}\tI[{bb.B}]\n");
+                            Format(writer, $"R{bb.A}\tI[{bb.B}]\n");
                             break;
                         }
                     case OpCode.RangeInc:
                         {
                             b = OperandB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"RANGE_INC\tR{b.A}\n");
+                            Format(writer, $"R{b.A}\n");
                             break;
                         }
                     case OpCode.RangeExc:
                         {
                             b = OperandB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"RANGE_EXC\tR{b.A}\n");
+                            Format(writer, $"R{b.A}\n");
                             break;
                         }
                     case OpCode.Def:
                         {
                             bb = OperandBB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"DEF\t\tR{bb.A}\t:{symbolTable.NameOf(irep.Symbols[bb.B])}\t(R{bb.A + 1})\n");
+                            Format(writer, $"R{bb.A}\t:{symbolTable.NameOf(irep.Symbols[bb.B])}\t(R{bb.A + 1})\n");
                             break;
                         }
                     case OpCode.Undef:
                         {
                             b = OperandB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"UNDEF\t\t:{symbolTable.NameOf(irep.Symbols[b.A])}\n");
+                            Format(writer, $":{symbolTable.NameOf(irep.Symbols[b.A])}\n");
                             break;
                         }
                     case OpCode.Alias:
                         {
                             bb = OperandBB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"ALIAS\t\t:{symbolTable.NameOf(irep.Symbols[bb.A])}\t:{symbolTable.NameOf(irep.Symbols[bb.B])}\n");
+                            Format(writer, $":{symbolTable.NameOf(irep.Symbols[bb.A])}\t:{symbolTable.NameOf(irep.Symbols[bb.B])}\n");
                             break;
                         }
                     case OpCode.Add:
                         {
-                            b = OperandB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"ADD\t\tR{b.A}\tR{b.A + 1}\n");
-                            break;
+                            goto case OpCode.EQ;
                         }
                     case OpCode.AddI:
                         {
                             bb = OperandBB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"ADDI\t\tR{bb.A}\t{bb.B}\t");
+                            Format(writer, $"R{bb.A}\t{bb.B}\t");
                             WriteLocalVariableA(bb.A);
                             break;
                         }
                     case OpCode.Sub:
                         {
-                            b = OperandB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"SUB\t\tR{b.A}\tR{b.A + 1}\n");
-                            break;
+                           goto case OpCode.EQ;
                         }
                     case OpCode.SubI:
                         {
                             bb = OperandBB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"SUBI\t\tR{bb.A}\t{bb.B}\t");
+                            Format(writer, $"R{bb.A}\t{bb.B}\t");
                             WriteLocalVariableA(bb.A);
                             break;
                         }
                     case OpCode.Mul:
-                        {
-                            b = OperandB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"MUL\t\tR{b.A}\tR{b.A + 1}\n");
-                            break;
-                        }
                     case OpCode.Div:
-                        {
-                            b = OperandB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"DIV\t\tR{b.A}\tR{b.A + 1}\n");
-                            break;
-                        }
                     case OpCode.LT:
-                        {
-                            b = OperandB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"LT\t\tR{b.A}\tR{b.A + 1}\n");
-                            break;
-                        }
                     case OpCode.LE:
-                        {
-                            b = OperandB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"LE\t\tR{b.A}\tR{b.A + 1}\n");
-                            break;
-                        }
                     case OpCode.GT:
-                        {
-                            b = OperandB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"GT\t\tR{b.A}\tR{b.A + 1}\n");
-                            break;
-                        }
                     case OpCode.GE:
-                        {
-                            b = OperandB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"GE\t\tR{b.A}\tR{b.A + 1}\n");
-                            break;
-                        }
                     case OpCode.EQ:
                         {
                             b = OperandB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"EQ\t\tR{b.A}\tR{b.A + 1}\n");
+                            Format(writer, $"R{b.A}\tR{b.A + 1}\n");
                             break;
                         }
                     case OpCode.Array:
                         {
                             bb = OperandBB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"ARRAY\t\tR{bb.A}\tR{bb.A}\t{bb.B}");
+                            Format(writer, $"R{bb.A}\tR{bb.A}\t{bb.B}");
                             WriteLocalVariableA(bb.A);
                             break;
                         }
                     case OpCode.Array2:
                         {
                             bbb = OperandBBB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"ARRAY\t\tR{bbb.A}\tR{bbb.B}\t{bbb.C}");
+                            Format(writer, $"R{bbb.A}\tR{bbb.B}\t{bbb.C}");
                             WriteLocalVariableA(bbb.A);
                             break;
                         }
                     case OpCode.AryCat:
                         {
                             b = OperandB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"ARYCAT\t\tR{b.A}\tR{b.A + 1}\t");
+                            Format(writer, $"R{b.A}\tR{b.A + 1}\t");
                             WriteLocalVariableA(b.A);
                             break;
                         }
                     case OpCode.AryPush:
                         {
                             bb = OperandBB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"ARYPUSH\t\tR{bb.A}\t{bb.B}\t");
+                            Format(writer, $"R{bb.A}\t{bb.B}\t");
                             WriteLocalVariableA(bb.A);
                             break;
                         }
                     case OpCode.ArySplat:
                         {
                             b = OperandB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"ARYSPLAT\tR{b.A}\t");
+                            Format(writer, $"R{b.A}\t");
                             WriteLocalVariableA(b.A);
                             break;
                         }
                     case OpCode.ARef:
                         {
                             bbb = OperandBBB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"AREF\t\tR{bbb.A}\tR{bbb.B}\t{bbb.C}");
+                            Format(writer, $"R{bbb.A}\tR{bbb.B}\t{bbb.C}");
                             WriteLocalVariableA(bbb.A);
                             break;
                         }
                     case OpCode.ASet:
                         {
                             bbb = OperandBBB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"ASET\t\tR{bbb.A}\tR{bbb.B}\t{bbb.C}");
+                            Format(writer, $"R{bbb.A}\tR{bbb.B}\t{bbb.C}");
                             WriteLocalVariableAB(bbb.A, bbb.B);
                             break;
                         }
                     case OpCode.APost:
                         {
                             bbb = OperandBBB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"APOST\t\tR{bbb.A}\t{bbb.B}\t{bbb.C}");
+                            Format(writer, $"R{bbb.A}\t{bbb.B}\t{bbb.C}");
                             WriteLocalVariableA(bbb.A);
                             break;
                         }
                     case OpCode.Intern:
                         {
                             b = OperandB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"INTERN\t\tR{b.A}\t");
+                            Format(writer, $"R{b.A}\t");
                             WriteLocalVariableA(b.A);
                             break;
                         }
                     case OpCode.Symbol:
                         {
                             bb = OperandBB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"SYMBOL\t\tR{bb.A}\tL[{bb.B}]\t; {irep.PoolValues[bb.B].As<RString>().AsSpan()}");
+                            Format(writer, $"R{bb.A}\tL[{bb.B}]\t; {irep.PoolValues[bb.B].As<RString>().AsSpan()}");
                             WriteLocalVariableA(bb.A);
                             break;
                         }
                     case OpCode.String:
                         {
                             bb = OperandBB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"STRING\t\tR{bb.A}\tL[{bb.B}]\t; {irep.PoolValues[bb.B].As<RString>().AsSpan()}");
+                            Format(writer, $"R{bb.A}\tL[{bb.B}]\t; {irep.PoolValues[bb.B].As<RString>().AsSpan()}");
                             WriteLocalVariableA(bb.A);
                             break;
                         }
                     case OpCode.StrCat:
                         {
                             b = OperandB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"STRCAT\t\tR{b.A}\tR{b.A + 1}\t");
+                            Format(writer, $"R{b.A}\tR{b.A + 1}\t");
                             WriteLocalVariableA(b.A);
                             break;
                         }
                     case OpCode.Hash:
                         {
                             bb = OperandBB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"HASH\t\tR{bb.A}\t{bb.B}\t");
+                            Format(writer, $"R{bb.A}\t{bb.B}\t");
                             WriteLocalVariableA(bb.A);
                             break;
                         }
                     case OpCode.HashAdd:
                         {
                             bb = OperandBB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"HASHADD\t\tR{bb.A}\t{bb.B}\t");
+                            Format(writer, $"R{bb.A}\t{bb.B}\t");
                             WriteLocalVariableA(bb.A);
                             break;
                         }
                     case OpCode.HashCat:
                         {
                             b = OperandB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"HASHCAT\t\tR{b.A}\tR{b.A + 1}\t");
+                            Format(writer, $"R{b.A}\tR{b.A + 1}\t");
                             WriteLocalVariableA(b.A);
                             break;
                         }
                     case OpCode.OClass:
                         {
                             b = OperandB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"OCLASS\t\tR{b.A}\t");
+                            Format(writer, $"R{b.A}\t");
                             WriteLocalVariableA(b.A);
                             break;
                         }
                     case OpCode.Class:
                         {
                             bb = OperandBB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"CLASS\t\tR{bb.A}\t:{symbolTable.NameOf(irep.Symbols[bb.B])}");
+                            Format(writer, $"R{bb.A}\t:{symbolTable.NameOf(irep.Symbols[bb.B])}");
                             WriteLocalVariableA(bb.A);
                             break;
                         }
                     case OpCode.Module:
                         {
                             bb = OperandBB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"MODULE\t\tR{bb.A}\t:{symbolTable.NameOf(irep.Symbols[bb.B])}");
+                            Format(writer, $"R{bb.A}\t:{symbolTable.NameOf(irep.Symbols[bb.B])}");
                             WriteLocalVariableA(bb.A);
                             break;
                         }
                     case OpCode.Exec:
                         {
                             bb = OperandBB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"EXEC\t\tR{bb.A}\tI[{bb.B}]");
+                            Format(writer, $"R{bb.A}\tI[{bb.B}]");
                             WriteLocalVariableA(bb.A);
                             break;
                         }
                     case OpCode.SClass:
                         {
                             b = OperandB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"SCLASS\t\tR{b.A}\t");
+                            Format(writer, $"R{b.A}\t");
                             WriteLocalVariableA(b.A);
                             break;
                         }
                     case OpCode.TClass:
                         {
                             b = OperandB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"TCLASS\t\tR{b.A}\t\t");
+                            Format(writer, $"R{b.A}\t\t");
                             WriteLocalVariableA(b.A);
                             break;
                         }
@@ -717,61 +817,58 @@ partial class MRubyState
                             b = OperandB.Read(irep.Sequence, ref pc);
                             var message = irep.PoolValues[b.A];
                             if (message.Object is RString)
-                                Format(writer, $"ERR\t\t{message.As<RString>().AsSpan()}\n");
-                            else Format(writer, $"ERR\t\tL[{b.A}]\n");
+                                Format(writer, $"{message.As<RString>().AsSpan()}\n");
+                            else Format(writer, $"L[{b.A}]\n");
                             break;
                         }
                     case OpCode.Except:
                         {
                             b = OperandB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"EXCEPT\t\tR{b.A}\t\t");
+                            Format(writer, $"R{b.A}\t\t");
                             WriteLocalVariableA(b.A);
                             break;
                         }
                     case OpCode.Rescue:
                         {
                             bb = OperandBB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"RESCUE\t\tR{bb.A}\tR{bb.B}");
+                            Format(writer, $"R{bb.A}\tR{bb.B}");
                             WriteLocalVariableAB(bb.A, bb.B);
                             break;
                         }
                     case OpCode.RaiseIf:
                         {
                             b = OperandB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"RAISEIF\tR{b.A}\t\t");
+                            Format(writer, $"R{b.A}\t\t");
                             WriteLocalVariableA(b.A);
                             break;
                         }
                     case OpCode.Debug:
                         {
                             bbb = OperandBBB.Read(irep.Sequence, ref pc);
-                            Format(writer, $"DEBUG\t\t{bbb.A}\t{bbb.B}\t{bbb.C}\n");
+                            Format(writer, $"{bbb.A}\t{bbb.B}\t{bbb.C}\n");
                             break;
                         }
                     case OpCode.Stop:
                         {
                             OperandZ.Read(irep.Sequence, ref pc);
-                            writer.Write("STOP\n"u8);
                             break;
                         }
                     case OpCode.EXT1:
                         {
                             OperandZ.Read(irep.Sequence, ref pc);
-                            writer.Write("EXT1\n"u8);
                             break;
                         }
                     case OpCode.EXT2:
                         {
                             OperandZ.Read(irep.Sequence, ref pc);
-                            writer.Write("EXT2\n"u8);
                             break;
                         }
                     case OpCode.EXT3:
                         {
                             OperandZ.Read(irep.Sequence, ref pc);
-                            writer.Write("EXT3\n"u8);
                             break;
                         }
+                    // ReSharper restore UnreachableSwitchCaseDueToIntegerAnalysis
                 }
             }
 
