@@ -85,6 +85,10 @@ class SymbolTable
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ReadOnlySpan<byte> NameOf(Symbol symbol)
     {
+        if(symbol.Value==0)
+        {
+            return default;
+        }
         // if (TryInlineUnpack(symbol, out var utf8))
         // {
         //     return utf8;
