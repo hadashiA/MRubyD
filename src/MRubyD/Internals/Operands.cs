@@ -13,18 +13,7 @@ internal enum OperandType
     BS,
     BBB,
     BSS,
-}
-
-[StructLayout(LayoutKind.Explicit)]
-internal readonly struct BigEndianInt16
-{
-    [FieldOffset(0)]
-    public readonly byte A;
-
-    [FieldOffset(1)]
-    public readonly byte B;
-
-    public short Value => unchecked((short)((A << 8) | B));
+    W
 }
 
 [StructLayout(LayoutKind.Explicit)]
@@ -50,6 +39,8 @@ internal struct Operand
 
     [FieldOffset(1)]
     public OperandBSS BSS;
+    [FieldOffset(1)]
+    public OperandW W;
 }
 
 [StructLayout(LayoutKind.Explicit)]
@@ -69,8 +60,9 @@ internal struct OperandB
 
     public static OperandB Read(ReadOnlySpan<byte> sequence, ref int pc)
     {
-        var result = Unsafe.ReadUnaligned<OperandB>(ref Unsafe.Add(ref MemoryMarshal.GetReference(sequence), (1 + pc)));
         pc += 2;
+        var result = Unsafe.ReadUnaligned<OperandB>(ref Unsafe.Add(ref MemoryMarshal.GetReference(sequence), (pc - 1)));
+
         return result;
     }
 }
@@ -86,33 +78,34 @@ internal struct OperandBB
 
     public static OperandBB Read(ReadOnlySpan<byte> sequence, ref int pc)
     {
-        var result = Unsafe.ReadUnaligned<OperandBB>(ref Unsafe.Add(ref MemoryMarshal.GetReference(sequence), (1 + pc)));
         pc += 3;
+        var result = Unsafe.ReadUnaligned<OperandBB>(ref Unsafe.Add(ref MemoryMarshal.GetReference(sequence), (pc - 2)));
+
         return result;
     }
 }
 
 [StructLayout(LayoutKind.Explicit)]
-internal struct OperandS
+internal unsafe struct OperandS
 {
     [FieldOffset(0)]
     public short A;
 
-    [FieldOffset(1)]
-    BigEndianInt16 bigEndianA;
+    [FieldOffset(0)]
+    fixed byte bytesA[2];
 
 
     public static OperandS Read(ReadOnlySpan<byte> sequence, ref int pc)
     {
-        var result = Unsafe.ReadUnaligned<OperandS>(ref Unsafe.Add(ref MemoryMarshal.GetReference(sequence), (1 + pc)));
         pc += 3;
-        result.A = result.bigEndianA.Value;
+        var result = Unsafe.ReadUnaligned<OperandS>(ref Unsafe.Add(ref MemoryMarshal.GetReference(sequence), (pc - 2)));
+        result.A = (short)((result.bytesA[0] << 8) | result.bytesA[1]);
         return result;
     }
 }
 
 [StructLayout(LayoutKind.Explicit)]
-internal struct OperandBS
+internal unsafe struct OperandBS
 {
     [FieldOffset(0)]
     public byte A;
@@ -121,14 +114,14 @@ internal struct OperandBS
     public short B;
 
     [FieldOffset(1)]
-    BigEndianInt16 bigEndianB;
+    fixed byte bytesB[2];
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static OperandBS Read(ReadOnlySpan<byte> sequence, ref int pc)
     {
-        var result = Unsafe.ReadUnaligned<OperandBS>(ref Unsafe.Add(ref MemoryMarshal.GetReference(sequence), (1 + pc)));
         pc += 4;
-        result.B = result.bigEndianB.Value;
+        var result = Unsafe.ReadUnaligned<OperandBS>(ref Unsafe.Add(ref MemoryMarshal.GetReference(sequence), (pc - 3)));
+        result.B = (short)((result.bytesB[0] << 8) | result.bytesB[1]);
         return result;
     }
 }
@@ -147,14 +140,14 @@ internal struct OperandBBB
 
     public static OperandBBB Read(ReadOnlySpan<byte> sequence, ref int pc)
     {
-        var result = Unsafe.ReadUnaligned<OperandBBB>(ref Unsafe.Add(ref MemoryMarshal.GetReference(sequence), (1 + pc)));
         pc += 4;
+        var result = Unsafe.ReadUnaligned<OperandBBB>(ref Unsafe.Add(ref MemoryMarshal.GetReference(sequence), (pc - 3)));
         return result;
     }
 }
 
 [StructLayout(LayoutKind.Explicit)]
-internal struct OperandBSS
+internal unsafe struct OperandBSS
 {
     [FieldOffset(0)]
     public byte A;
@@ -166,18 +159,34 @@ internal struct OperandBSS
     public short C;
 
     [FieldOffset(1)]
-    BigEndianInt16 bigEndianB;
+    fixed byte bytesB[2];
 
     [FieldOffset(3)]
-    BigEndianInt16 bigEndianC;
+    fixed byte bytesC[2];
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static OperandBSS Read(ReadOnlySpan<byte> sequence, ref int pc)
     {
-        var result = Unsafe.ReadUnaligned<OperandBSS>(ref Unsafe.Add(ref MemoryMarshal.GetReference(sequence), (1 + pc)));
         pc += 6;
-        result.B = result.bigEndianB.Value;
-        result.C = result.bigEndianC.Value;
+        var result = Unsafe.ReadUnaligned<OperandBSS>(ref Unsafe.Add(ref MemoryMarshal.GetReference(sequence), (pc - 5)));
+
+        result.B = (short)((result.bytesB[0] << 8) | result.bytesB[1]);
+        result.C = (short)((result.bytesC[0] << 8) | result.bytesC[1]);
+        return result;
+    }
+}
+
+internal unsafe struct OperandW
+{
+    // ReSharper disable once UnassignedField.Local
+    public fixed byte Bytes[3];
+    public int A => (Bytes[0] << 16) | (Bytes[1] << 8) | Bytes[2];
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static OperandW Read(ReadOnlySpan<byte> sequence, ref int pc)
+    {
+        pc += 4;
+        var result = Unsafe.ReadUnaligned<OperandW>(ref Unsafe.Add(ref MemoryMarshal.GetReference(sequence), (pc - 3)));
         return result;
     }
 }

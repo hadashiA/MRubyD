@@ -1,4 +1,4 @@
-﻿// See https://aka.ms/new-console-template for more information
+// See https://aka.ms/new-console-template for more information
 
 
 using System.Buffers;
@@ -15,7 +15,14 @@ var compiler = MRubyCompiler.Create(mRubyDState);
 
 var arrayBufferWriter = new ArrayBufferWriter<byte>();
 
-Dump ( compiler.Compile(ReadBytes("fib.rb")));
+var fileIrep = compiler.Compile(ReadBytes("fib.rb"));
+Dump ( fileIrep);
+
+Console.WriteLine(mRubyDState.Exec(fileIrep));
+
+
+Dump(mRubyDState.IntegerClass.MethodTable[mRubyDState.Intern("times"u8)].Proc!.Irep!);
+
 void Dump(Irep irep)
 {
     mRubyDState.CodeDump(irep, arrayBufferWriter);
