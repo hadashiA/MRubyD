@@ -15,7 +15,7 @@ partial class MRubyState
 {
     const int MethodCacheSize = 1 << 8; // TODO:
 
-    public RClass? SingletonClassOf(MRubyValue value)
+    public RClass SingletonClassOf(MRubyValue value)
     {
         switch (value.VType)
         {
@@ -26,10 +26,15 @@ partial class MRubyState
             case MRubyVType.Symbol:
             case MRubyVType.Integer:
             case MRubyVType.Float:
-                return null;
+                Raise(Names.TypeError, "can't define singleton"u8);
+                return null!; // not reached
             default:
                 var obj = value.As<RObject>();
-                if (obj.Class == null!) return null;
+                if (obj.Class == null!)
+                {
+                    Raise(Names.TypeError, "can't define singleton"u8);
+                    return null!; // not reached
+                }
                 PrepareSingletonClass(obj);
                 return obj.Class;
         }
@@ -258,7 +263,6 @@ partial class MRubyState
             PrepareSingletonClass(singletonClass);
         }
         singletonClass.InstanceVariables.Set(Names.AttachedKey, MRubyValue.From(obj));
-        singletonClass.MarkAsFrozen();
         obj.Class = singletonClass;
     }
 

@@ -19,15 +19,9 @@ static class ModuleMembers
     [MRubyMethod(RequiredArguments = 1)]
     public static MRubyMethod ExtendObject = new((state, self) =>
     {
+        // state.EnsureValueType(self, MRubyVType.Module);
         var obj = state.GetArg(0);
-        state.EnsureValueType(obj, MRubyVType.Module);
-
-        var target = state.SingletonClassOf(self);
-        if (target is null)
-        {
-            state.Raise(Names.TypeError, "can't define singleton"u8);
-        }
-
+        var target = state.SingletonClassOf(obj);
         state.IncludeModule(target!, self.As<RClass>());
         return self;
     });
