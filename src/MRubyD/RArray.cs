@@ -109,6 +109,19 @@ public sealed class RArray : RObject
         data[Length] = newItem;
     }
 
+    public bool TryPop(out MRubyValue value)
+    {
+        if (Length <= 0)
+        {
+            value = default;
+            return false;
+        }
+
+        value = data[offset + Length - 1];
+        EnsureModifiable(Length - 1, true);
+        return true;
+    }
+
     public void Unshift(MRubyValue newItem)
     {
         var src = AsSpan();

@@ -496,29 +496,7 @@ partial class MRubyState
                     case OpCode.SetCV:
                     {
                         callInfo.ReadOperand(sequence, out byte a, out byte b);
-                        var name = irep.Symbols[b];
-                        var value = registers[a];
-                        var p = callInfo.Proc;
-                        RClass? c;
-                        while (true)
-                        {
-                            if (p == null)
-                            {
-                                throw new InvalidOperationException();
-                            }
-                            c = p.Scope switch
-                            {
-                                REnv env => env.TargetClass,
-                                RClass scopeClass => scopeClass,
-                                _ => null
-                            };
-                            if (c != null && c.VType != MRubyVType.SClass)
-                            {
-                                break;
-                            }
-                            p = p!.Upper;
-                        }
-                        SetConst(name, c, value);
+                        SetClassVariable(irep.Symbols[b], registers[a]);
                         goto Next;
                     }
                     case OpCode.GetConst:
@@ -1901,7 +1879,7 @@ partial class MRubyState
                         RClass definedClass;
                         if (!super.IsNil)
                         {
-                            if (super.Object is RClass s)
+                            if (super.Object is RClass { VType: MRubyVType.Class } s)
                             {
                                 superClass = s;
                             }

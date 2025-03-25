@@ -9,8 +9,9 @@ public enum MRubyObjectFlags : byte
     Frozen = 1,
 
     ClassInitialized = 1 << 1,
-    ClassOrigin = 1 << 2,
-    ClassPrepended = 1 << 3,
+    ClassInherited = 1 << 2,
+    ClassOrigin = 1 << 3,
+    ClassPrepended = 1 << 4,
 
     ProcScope = 1 << 1,
     ProcStrict = 1 << 2,

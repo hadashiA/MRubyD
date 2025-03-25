@@ -129,11 +129,43 @@ partial class MRubyState
 
     public void SetClassVariable(RClass c, Symbol id, MRubyValue value)
     {
-        // RClass? target = c;
-        // while (c != null)
-        // {
-        //
-        // }
-        throw new NotImplementedException();
+        var targetClass = c;
+        while (targetClass != null!)
+        {
+            if (targetClass.InstanceVariables.TryGet(id, out _))
+            {
+                EnsureNotFrozen(value);
+                targetClass.InstanceVariables.Set(id, value);
+                return;
+            }
+            targetClass = targetClass.Super;
+        }
+
+        if (c.VType == MRubyVType.SClass)
+        {
+            var attachedValue = c.InstanceVariables.Get(Names.AttachedKey);
+            switch (attachedValue.VType)
+            {
+                case MRubyVType.Class:
+                case MRubyVType.Module:
+                case MRubyVType.SClass:
+                    targetClass = attachedValue.As<RClass>();
+                    break;
+                default:
+                    targetClass = c;
+                    break;
+            }
+        }
+        else if (c.VType == MRubyVType.IClass)
+        {
+            targetClass = c.Class;
+        }
+        else
+        {
+            targetClass = c;
+        }
+
+        EnsureNotFrozen(targetClass);
+        targetClass.InstanceVariables.Set(id, value);
     }
 }

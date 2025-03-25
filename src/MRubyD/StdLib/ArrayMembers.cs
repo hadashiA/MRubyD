@@ -38,6 +38,8 @@ static class ArrayMembers
     public static MRubyMethod Push = new((state, self) =>
     {
         var array = self.As<RArray>();
+        state.EnsureNotFrozen(array);
+
         var args = state.GetRestArg(0);
 
         var start = array.Length;
@@ -49,6 +51,16 @@ static class ArrayMembers
             span[0] = t;
         }
         return self;
+    });
+
+    [MRubyMethod]
+    public static MRubyMethod Pop = new((state, self) =>
+    {
+        var array = self.As<RArray>();
+        state.EnsureNotFrozen(array);
+
+        array.TryPop(out var result);
+        return result;
     });
 
     [MRubyMethod]

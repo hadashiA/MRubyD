@@ -264,9 +264,10 @@ partial class MRubyState
 
     public void ClassInheritedHook(RClass superClass, RClass newClass)
     {
-        if (RespondTo(newClass, Names.Inherited))
+        superClass.SetFlag(MRubyObjectFlags.ClassInherited);
+        if (RespondTo(superClass.Class, Names.Inherited))
         {
-            Send(MRubyValue.From(newClass), Names.Inherited, MRubyValue.From(superClass));
+            Send(MRubyValue.From(superClass), Names.Inherited, MRubyValue.From(newClass));
         }
     }
 
