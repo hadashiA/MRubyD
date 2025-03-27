@@ -65,7 +65,6 @@ partial class MRubyState
         {
             Raise(Names.TypeError, NewString($"{StringifyAny(arg)} cannot be converted to String"));
         }
-
         return arg.As<RString>();
     }
 
@@ -79,7 +78,6 @@ partial class MRubyState
         {
             Raise(Names.ArgumentError, "no block given"u8);
         }
-
         return blockArg;
     }
 
@@ -142,11 +140,9 @@ partial class MRubyState
             {
                 kdict.Add(MRubyValue.From(key), value);
             }
-
             nextStack[kargOffset] = MRubyValue.From(kdict);
             nextCallInfo.MarkAsKeywordArgumentPacked();
         }
-
         nextStack[stackSize - 1] = block != null ? MRubyValue.From(block) : MRubyValue.Nil;
 
         if (TryFindMethod(receiverClass, methodId, out var method, out _))
@@ -157,7 +153,6 @@ partial class MRubyState
         {
             method = PrepareMethodMissing(ref nextCallInfo, self, methodId);
         }
-
         nextCallInfo.Proc = method.Proc;
 
         // var block = stack[blockArgumentOffset];
@@ -168,14 +163,9 @@ partial class MRubyState
             nextCallInfo.CallerType = CallerType.MethodCalled;
             nextCallInfo.ProgramCounter = 0;
 
-            try
-            {
-                return method.Invoke(this, self);
-            }
-            finally
-            {
-                context.PopCallStack();
-            }
+            var result = method.Invoke(this, self);
+            context.PopCallStack();
+            return result;
         }
         else
         {
@@ -217,7 +207,6 @@ partial class MRubyState
             args.CopyTo(nextStack[1..]);
             nextCallInfo.ArgumentCount = (byte)args.Length;
         }
-
         nextCallInfo.KeywordArgumentCount = 0;
 
         if (block is not { } proc)
@@ -243,6 +232,8 @@ partial class MRubyState
             Scope = ObjectClass
         };
 
+        context.UnwindStack();
+        
         ref var callInfo = ref context.CurrentCallInfo;
         callInfo.StackPointer = 0;
         callInfo.Proc = proc;
@@ -429,42 +420,21 @@ partial class MRubyState
                         registers[bb.A] = GetClassVariable(irep.Symbols[bb.B]);
                         goto Next;
                     case OpCode.SetCV:
-                    {
-                        var p = callInfo.Proc;
-                        RClass? c;
-                        while (true)
-                        {
-                            if (p == null)
-                            {
-                                throw new InvalidOperationException();
-                            }
-
-                            c = p.Scope switch
-                            {
-                                REnv env => env.TargetClass,
-                                RClass scopeClass => scopeClass,
-                                _ => null
-                            };
-                            if (c != null && c.VType != MRubyVType.SClass)
-                            {
-                                break;
-                            }
-
-                            p = p!.Upper;
-                        }
                         bb = OperandBB.Read(sequence, ref callInfo.ProgramCounter);
-                        SetConst(irep.Symbols[bb.B], c, registers[bb.A]);
+                        SetClassVariable(irep.Symbols[bb.B], registers[bb.A]);
                         goto Next;
-                    }
+                    
                     case OpCode.GetConst:
-                    {
                         bb = OperandBB.Read(sequence, ref callInfo.ProgramCounter);
-
+                        ref var registerA = ref registers[bb.A];
+                    {
+                       
+                       
                         var id = irep.Symbols[bb.B];
                         var c = callInfo.Proc?.Scope?.TargetClass ?? ObjectClass;
                         if (c.InstanceVariables.TryGet(id, out var value))
                         {
-                            registers[bb.A] = value;
+                            registerA = value;
                             goto Next;
                         }
 
@@ -488,12 +458,12 @@ partial class MRubyState
                             x = proc.Scope?.TargetClass ?? ObjectClass;
                             if (x.InstanceVariables.TryGet(id, out value))
                             {
-                                registers[bb.A] = value;
+                                registerA = value;
                                 goto Next;
                             }
                             proc = proc.Upper;
                         }
-                        registers[bb.A] = GetConst(id, c);
+                        registerA = GetConst(id, c);
                         goto Next;
                     }
                     case OpCode.SetConst:
@@ -506,7 +476,7 @@ partial class MRubyState
                     }
                     case OpCode.GetMCnst:
                         bb = OperandBB.Read(sequence, ref callInfo.ProgramCounter);
-                        ref var registerA = ref registers[bb.A];
+                        registerA = ref registers[bb.A];
                     {
                         
                         //var mod = registers[bb.A];
