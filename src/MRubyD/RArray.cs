@@ -73,6 +73,13 @@ public sealed class RArray : RObject
         return clone;
     }
 
+    internal void PushRange(ReadOnlySpan<MRubyValue>newItems)
+    {
+        var start = Length;
+        EnsureModifiable(Length + newItems.Length, true);
+        newItems.CopyTo(data.AsSpan(start));
+    }
+
     public MRubyValue this[int index]
     {
         get

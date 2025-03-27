@@ -46,7 +46,7 @@ internal struct Operand
 [StructLayout(LayoutKind.Explicit)]
 internal struct OperandZ
 {
-    public static void Read(ReadOnlySpan<byte> sequence, ref int pc)
+    public static void Read(in ReadOnlySpan<byte> sequence, ref int pc)
     {
         pc += 1;
     }
@@ -58,7 +58,7 @@ internal struct OperandB
     [FieldOffset(0)]
     public byte A;
 
-    public static OperandB Read(ReadOnlySpan<byte> sequence, ref int pc)
+    public static OperandB Read(in ReadOnlySpan<byte> sequence, ref int pc)
     {
         pc += 2;
         var result = Unsafe.ReadUnaligned<OperandB>(ref Unsafe.Add(ref MemoryMarshal.GetReference(sequence), (pc - 1)));
@@ -76,7 +76,7 @@ internal struct OperandBB
     [FieldOffset(1)]
     public byte B;
 
-    public static OperandBB Read(ReadOnlySpan<byte> sequence, ref int pc)
+    public static OperandBB Read(in ReadOnlySpan<byte> sequence, ref int pc)
     {
         pc += 3;
         var result = Unsafe.ReadUnaligned<OperandBB>(ref Unsafe.Add(ref MemoryMarshal.GetReference(sequence), (pc - 2)));
@@ -95,7 +95,7 @@ internal unsafe struct OperandS
     fixed byte bytesA[2];
 
 
-    public static OperandS Read(ReadOnlySpan<byte> sequence, ref int pc)
+    public static OperandS Read(in ReadOnlySpan<byte> sequence, ref int pc)
     {
         pc += 3;
         var result = Unsafe.ReadUnaligned<OperandS>(ref Unsafe.Add(ref MemoryMarshal.GetReference(sequence), (pc - 2)));
@@ -117,7 +117,7 @@ internal unsafe struct OperandBS
     fixed byte bytesB[2];
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OperandBS Read(ReadOnlySpan<byte> sequence, ref int pc)
+    public static OperandBS Read(in ReadOnlySpan<byte> sequence, ref int pc)
     {
         pc += 4;
         var result = Unsafe.ReadUnaligned<OperandBS>(ref Unsafe.Add(ref MemoryMarshal.GetReference(sequence), (pc - 3)));
@@ -138,7 +138,7 @@ internal struct OperandBBB
     [FieldOffset(2)]
     public byte C;
 
-    public static OperandBBB Read(ReadOnlySpan<byte> sequence, ref int pc)
+    public static OperandBBB Read(in ReadOnlySpan<byte> sequence, ref int pc)
     {
         pc += 4;
         var result = Unsafe.ReadUnaligned<OperandBBB>(ref Unsafe.Add(ref MemoryMarshal.GetReference(sequence), (pc - 3)));
@@ -165,7 +165,7 @@ internal unsafe struct OperandBSS
     fixed byte bytesC[2];
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OperandBSS Read(ReadOnlySpan<byte> sequence, ref int pc)
+    public static OperandBSS Read(in ReadOnlySpan<byte> sequence, ref int pc)
     {
         pc += 6;
         var result = Unsafe.ReadUnaligned<OperandBSS>(ref Unsafe.Add(ref MemoryMarshal.GetReference(sequence), (pc - 5)));
@@ -183,7 +183,7 @@ internal unsafe struct OperandW
     public int A => (Bytes[0] << 16) | (Bytes[1] << 8) | Bytes[2];
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OperandW Read(ReadOnlySpan<byte> sequence, ref int pc)
+    public static OperandW Read(in ReadOnlySpan<byte> sequence, ref int pc)
     {
         pc += 4;
         var result = Unsafe.ReadUnaligned<OperandW>(ref Unsafe.Add(ref MemoryMarshal.GetReference(sequence), (pc - 3)));
