@@ -233,7 +233,7 @@ partial class MRubyState
         };
 
         context.UnwindStack();
-        
+
         ref var callInfo = ref context.CurrentCallInfo;
         callInfo.StackPointer = 0;
         callInfo.Proc = proc;
@@ -428,8 +428,6 @@ partial class MRubyState
                         bb = OperandBB.Read(sequence, ref callInfo.ProgramCounter);
                         ref var registerA = ref registers[bb.A];
                     {
-                       
-                       
                         var id = irep.Symbols[bb.B];
                         var c = callInfo.Proc?.Scope?.TargetClass ?? ObjectClass;
                         if (c.InstanceVariables.TryGet(id, out var value))
