@@ -6,6 +6,7 @@
         <LangVersion>13</LangVersion>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <TieredCompilation>false</TieredCompilation>
     </PropertyGroup>
 
     <ItemGroup>
@@ -17,5 +18,9 @@
     <ItemGroup>
       <ProjectReference Include="..\..\src\MRubyD.Compiler\MRubyD.Compiler.csproj" />
       <ProjectReference Include="..\..\src\MRubyD\MRubyD.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="JitInspect" Version="1.0.2" />
     </ItemGroup>
 </Project>

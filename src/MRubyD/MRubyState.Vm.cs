@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using MRubyD.Internals;
 using MRubyD.StdLib;
 
@@ -77,7 +78,6 @@ partial class MRubyState
         {
             Raise(Names.ArgumentError, "no block given"u8);
         }
-
         return blockArg;
     }
 
@@ -130,6 +130,7 @@ partial class MRubyState
                 args.CopyTo(nextStack[1..]);
             }
         }
+
         if (!kargs.IsEmpty)
         {
             var kargOffset = MRubyCallInfo.CalculateKeywordArgumentOffset(args.Length, kargs.Length);
@@ -316,7 +317,7 @@ partial class MRubyState
             registerVariableCount = (ushort)stackKeep;
         }
 
-        var sequence = irep.Sequence.AsSpan(pc);
+        ReadOnlySpan<byte> sequence = irep.Sequence.AsSpan(pc);
 
         ref var callInfo = ref context.CurrentCallInfo;
         context.ExtendStack(callInfo.StackPointer + registerVariableCount);
@@ -338,175 +339,100 @@ partial class MRubyState
                         goto Next;
                     }
                     case OpCode.Move:
-                    {
-                        callInfo.ReadOperand(sequence, out byte a, out byte b);
-                        registers[a] = registers[b];
+                        var bb = OperandBB.Read(sequence, ref callInfo.ProgramCounter);
+                        registers[bb.A] = registers[bb.B];
                         goto Next;
-                    }
                     case OpCode.LoadL:
-                    {
-                        callInfo.ReadOperand(sequence, out byte a, out byte b);
-                        registers[a] = irep.PoolValues[b];
+                        bb = OperandBB.Read(sequence, ref callInfo.ProgramCounter);
+                        registers[bb.A] = irep.PoolValues[bb.B];
                         goto Next;
-                    }
                     case OpCode.LoadI8:
-                    {
-                        callInfo.ReadOperand(sequence, out byte a, out byte b);
-                        registers[a] = MRubyValue.From(b);
+                        bb = OperandBB.Read(sequence, ref callInfo.ProgramCounter);
+                        registers[bb.A] = MRubyValue.From(bb.B);
                         goto Next;
-                    }
                     case OpCode.LoadINeg:
-                    {
-                        callInfo.ReadOperand(sequence, out byte a, out byte b);
-                        registers[a] = MRubyValue.From(-b);
+                        bb = OperandBB.Read(sequence, ref callInfo.ProgramCounter);
+                        registers[bb.A] = MRubyValue.From(-bb.B);
                         goto Next;
-                    }
                     case OpCode.LoadI__1:
-                    {
-                        callInfo.ReadOperand(sequence, out byte a);
-                        registers[a] = MRubyValue.From(-1);
-                        goto Next;
-                    }
                     case OpCode.LoadI_0:
-                    {
-                        callInfo.ReadOperand(sequence, out byte a);
-                        registers[a] = MRubyValue.From(0);
-                        goto Next;
-                    }
                     case OpCode.LoadI_1:
-                    {
-                        callInfo.ReadOperand(sequence, out byte a);
-                        registers[a] = MRubyValue.From(1);
-                        goto Next;
-                    }
                     case OpCode.LoadI_2:
-                    {
-                        callInfo.ReadOperand(sequence, out byte a);
-                        registers[a] = MRubyValue.From(2);
-                        goto Next;
-                    }
                     case OpCode.LoadI_3:
-                    {
-                        callInfo.ReadOperand(sequence, out byte a);
-                        registers[a] = MRubyValue.From(3);
-                        goto Next;
-                    }
                     case OpCode.LoadI_4:
-                    {
-                        callInfo.ReadOperand(sequence, out byte a);
-                        registers[a] = MRubyValue.From(4);
-                        goto Next;
-                    }
                     case OpCode.LoadI_5:
-                    {
-                        callInfo.ReadOperand(sequence, out byte a);
-                        registers[a] = MRubyValue.From(5);
-                        goto Next;
-                    }
                     case OpCode.LoadI_6:
-                    {
-                        callInfo.ReadOperand(sequence, out byte a);
-                        registers[a] = MRubyValue.From(6);
-                        goto Next;
-                    }
                     case OpCode.LoadI_7:
-                    {
-                        callInfo.ReadOperand(sequence, out byte a);
-                        registers[a] = MRubyValue.From(7);
+                        int a = ReadOperandB(sequence, ref callInfo.ProgramCounter);
+                        registers[a] = MRubyValue.From((int)opcode - (int)OpCode.LoadI_0);
                         goto Next;
-                    }
                     case OpCode.LoadI16:
-                    {
-                        callInfo.ReadOperand(sequence, out byte a, out short b);
-                        registers[a] = MRubyValue.From(b);
+                        var bs = OperandBS.Read(sequence, ref callInfo.ProgramCounter);
+                        registers[bs.A] = MRubyValue.From(bs.B);
                         goto Next;
-                    }
                     case OpCode.LoadI32:
-                    {
-                        callInfo.ReadOperand(sequence, out byte a, out int b);
-                        registers[a] = MRubyValue.From(b);
+                        var bss = OperandBSS.Read(sequence, ref callInfo.ProgramCounter);
+                        registers[bss.A] = MRubyValue.From((bss.B << 16) + bss.C);
                         goto Next;
-                    }
                     case OpCode.LoadSym:
-                    {
-                        callInfo.ReadOperand(sequence, out byte a, out byte b);
-                        registers[a] = MRubyValue.From(irep.Symbols[b]);
+                        bb = OperandBB.Read(sequence, ref callInfo.ProgramCounter);
+                        registers[bb.A] = MRubyValue.From(irep.Symbols[bb.B]);
                         goto Next;
-                    }
                     case OpCode.LoadNil:
-                    {
-                        callInfo.ReadOperand(sequence, out byte a);
-                        registers[a] = MRubyValue.Nil;
+                        a = ReadOperandB(sequence, ref callInfo.ProgramCounter);
+                        registers[a] = default;
                         goto Next;
-                    }
                     case OpCode.LoadSelf:
-                    {
-                        callInfo.ReadOperand(sequence, out byte a);
+                        a = ReadOperandB(sequence, ref callInfo.ProgramCounter);
                         registers[a] = registers[0];
                         goto Next;
-                    }
                     case OpCode.LoadT:
-                    {
-                        callInfo.ReadOperand(sequence, out byte a);
+                        a = ReadOperandB(sequence, ref callInfo.ProgramCounter);
                         registers[a] = MRubyValue.True;
                         goto Next;
-                    }
                     case OpCode.LoadF:
-                    {
-                        callInfo.ReadOperand(sequence, out byte a);
+                        a = ReadOperandB(sequence, ref callInfo.ProgramCounter);
                         registers[a] = MRubyValue.False;
                         goto Next;
-                    }
+
                     case OpCode.GetGV:
-                    {
-                        callInfo.ReadOperand(sequence, out byte a, out byte b);
-                        registers[a] = globalVariables.Get(irep.Symbols[b]);
+                        bb = OperandBB.Read(sequence, ref callInfo.ProgramCounter);
+                        registers[bb.A] = globalVariables.Get(irep.Symbols[bb.B]);
                         goto Next;
-                    }
                     case OpCode.SetGV:
-                    {
-                        callInfo.ReadOperand(sequence, out byte a, out byte b);
-                        globalVariables.Set(irep.Symbols[b], registers[a]);
+                        bb = OperandBB.Read(sequence, ref callInfo.ProgramCounter);
+                        globalVariables.Set(irep.Symbols[bb.B], registers[bb.A]);
                         goto Next;
-                    }
                     case OpCode.GetSV:
                     case OpCode.SetSV:
-                    {
                         callInfo.ProgramCounter += 3;
                         goto Next;
-                    }
                     case OpCode.GetIV:
-                    {
-                        callInfo.ReadOperand(sequence, out byte a, out byte b);
-                        registers[a] = registers[0].As<RObject>().InstanceVariables.Get(irep.Symbols[b]);
+                        bb = OperandBB.Read(sequence, ref callInfo.ProgramCounter);
+                        registers[bb.A] = registers[0].As<RObject>().InstanceVariables.Get(irep.Symbols[bb.B]);
                         goto Next;
-                    }
                     case OpCode.SetIV:
-                    {
-                        callInfo.ReadOperand(sequence, out byte a, out byte b);
-                        registers[0].As<RObject>().InstanceVariables.Set(irep.Symbols[b], registers[a]);
+                        bb = OperandBB.Read(sequence, ref callInfo.ProgramCounter);
+                        registers[0].As<RObject>().InstanceVariables.Set(irep.Symbols[bb.B], registers[bb.A]);
                         goto Next;
-                    }
                     case OpCode.GetCV:
-                    {
-                        callInfo.ReadOperand(sequence, out byte a, out byte b);
-                        registers[a] = GetClassVariable(irep.Symbols[b]);
+                        bb = OperandBB.Read(sequence, ref callInfo.ProgramCounter);
+                        registers[bb.A] = GetClassVariable(irep.Symbols[bb.B]);
                         goto Next;
-                    }
                     case OpCode.SetCV:
-                    {
-                        callInfo.ReadOperand(sequence, out byte a, out byte b);
-                        SetClassVariable(irep.Symbols[b], registers[a]);
+                        bb = OperandBB.Read(sequence, ref callInfo.ProgramCounter);
+                        SetClassVariable(irep.Symbols[bb.B], registers[bb.A]);
                         goto Next;
-                    }
+                    
                     case OpCode.GetConst:
+                        bb = OperandBB.Read(sequence, ref callInfo.ProgramCounter);
+                        ref var registerA = ref registers[bb.A];
                     {
-                        callInfo.ReadOperand(sequence, out byte a, out byte b);
-                        var id = irep.Symbols[b];
+                        var id = irep.Symbols[bb.B];
                         var c = callInfo.Proc?.Scope?.TargetClass ?? ObjectClass;
                         if (c.InstanceVariables.TryGet(id, out var value))
                         {
-                            registers[a] = value;
+                            registerA = value;
                             goto Next;
                         }
 
@@ -530,71 +456,72 @@ partial class MRubyState
                             x = proc.Scope?.TargetClass ?? ObjectClass;
                             if (x.InstanceVariables.TryGet(id, out value))
                             {
-                                registers[a] = value;
+                                registerA = value;
                                 goto Next;
                             }
                             proc = proc.Upper;
                         }
-                        registers[a] = GetConst(id, c);
+                        registerA = GetConst(id, c);
                         goto Next;
                     }
                     case OpCode.SetConst:
                     {
-                        callInfo.ReadOperand(sequence, out byte a, out byte b);
-                        var value = registers[a];
-                        var id = irep.Symbols[b];
-
+                        bb = OperandBB.Read(sequence, ref callInfo.ProgramCounter);
+                        //var id = irep.Symbols[bb.B];
                         var c = callInfo.Proc?.Scope?.TargetClass ?? ObjectClass;
-                        SetConst(id, c, value);
+                        SetConst(irep.Symbols[bb.B], c, registers[bb.A]);
                         goto Next;
                     }
                     case OpCode.GetMCnst:
+                        bb = OperandBB.Read(sequence, ref callInfo.ProgramCounter);
+                        registerA = ref registers[bb.A];
                     {
-                        callInfo.ReadOperand(sequence, out byte a, out byte b);
-                        var mod = registers[a];
-                        var name = irep.Symbols[b];
-                        registers[a] = GetConst(name, mod.As<RClass>());
+                        
+                        //var mod = registers[bb.A];
+                        var name = irep.Symbols[bb.B];
+                        registerA = GetConst(name, registerA.As<RClass>());
                         goto Next;
                     }
                     case OpCode.SetMCnst:
                     {
-                        callInfo.ReadOperand(sequence, out byte a, out byte b);
-                        var value = registers[a];
-                        var mod = registers[a + 1];
-                        var name = irep.Symbols[b];
-                        SetConst(name, mod.As<RClass>(), value);
+                        bb = OperandBB.Read(sequence, ref callInfo.ProgramCounter);
+                        registerA = ref registers[bb.A];
+                        //var mod = registers[bb.A + 1];
+                        var name = irep.Symbols[bb.B];
+                        SetConst(name, Unsafe.Add(ref registerA, 1).As<RClass>(), registerA);
                         goto Next;
                     }
                     case OpCode.GetIdx:
                     {
-                        callInfo.ReadOperand(sequence, out byte a);
-                        var valueA = registers[a];
-                        var valueB = registers[a + 1];
-                        switch (valueA.Object)
+                        a = ReadOperandB(sequence, ref callInfo.ProgramCounter);
+                        registerA = ref registers[a];
+                        var valueB = Unsafe.Add(ref registerA, 1);
+                        switch (registerA.Object)
                         {
                             case RArray array when valueB.IsInteger:
-                                registers[a] = array[(int)valueB.IntegerValue];
+                                registerA = array[(int)valueB.IntegerValue];
                                 goto Next;
                             case RHash hash:
-                                registers[a] = hash[valueB];
+                                registerA = hash[valueB];
                                 goto Next;
-                            case RString s:
+                            case RString str:
                                 switch (valueB.VType)
                                 {
                                     case MRubyVType.Integer:
                                     case MRubyVType.String:
                                     case MRubyVType.Range:
-                                        var substr = s.GetAref(valueB);
-                                        registers[a] = substr != null
+                                        var substr = str.GetAref(valueB);
+                                        registerA = substr != null
                                             ? MRubyValue.From(substr)
                                             : MRubyValue.Nil;
-                                        break;
+                                    break;
                                 }
-                                break;
+
+                            break;
                         }
 
                         // Jump to send :[]
-                        registers[a + 2] = MRubyValue.Nil; // push nil after arguments
+                        Unsafe.Add(ref registerA, 2) = MRubyValue.Nil; // push nil after arguments
                         var nextStackPointer = callInfo.StackPointer + a;
                         callInfo = ref context.PushCallStack();
                         callInfo.CallerType = CallerType.InVmLoop;
@@ -606,7 +533,7 @@ partial class MRubyState
                     }
                     case OpCode.SetIdx:
                     {
-                        callInfo.ReadOperand(sequence, out byte a);
+                        a = ReadOperandB(sequence, ref callInfo.ProgramCounter);
                         registers[a + 3] = MRubyValue.Nil; // push nil after arguments
 
                         // Jump to send :[]=
@@ -620,66 +547,59 @@ partial class MRubyState
                         goto case OpCode.SendInternal;
                     }
                     case OpCode.GetUpVar:
+                        OperandBBB bbb;
                     {
-                        callInfo.ReadOperand(sequence, out byte a, out byte b, out byte c);
-                        var env = callInfo.Proc?.FindUpperEnvTo(c);
-                        if (env != null && b < env.Stack.Length)
+                        bbb = OperandBBB.Read(sequence, ref callInfo.ProgramCounter);
+                        var env = callInfo.Proc?.FindUpperEnvTo(bbb.C);
+                        if (env != null && bbb.B < env.Stack.Length)
                         {
-                            registers[a] = env.Stack.Span[b];
+                            registers[bbb.A] = env.Stack.Span[bbb.B];
                         }
                         else
                         {
-                            registers[a] = MRubyValue.Nil;
+                            registers[bbb.A] = MRubyValue.Nil;
                         }
                         goto Next;
                     }
                     case OpCode.SetUpVar:
                     {
-                        callInfo.ReadOperand(sequence, out byte a, out byte b, out byte c);
-                        var env = callInfo.Proc?.FindUpperEnvTo(c);
-                        if (env != null && b < env.Stack.Length)
+                        bbb = OperandBBB.Read(sequence, ref callInfo.ProgramCounter);
+                        var env = callInfo.Proc?.FindUpperEnvTo(bbb.C);
+                        if (env != null && bbb.B < env.Stack.Length)
                         {
-                            env.Stack.Span[b] = registers[a];
+                            env.Stack.Span[bbb.B] = registers[bbb.A];
                         }
                         goto Next;
                     }
                     case OpCode.Jmp:
-                    {
-                        callInfo.ReadOperand(sequence, out short a);
-                        callInfo.ProgramCounter += a;
+                        var s = ReadOperandS(sequence, ref callInfo.ProgramCounter);
+                        callInfo.ProgramCounter += s;
                         goto Next;
-                    }
                     case OpCode.JmpIf:
-                    {
-                        callInfo.ReadOperand(sequence, out byte a, out short b);
-                        if (registers[a].Truthy)
+                        bs = OperandBS.Read(sequence, ref callInfo.ProgramCounter);
+                        if (registers[bs.A].Truthy)
                         {
-                            callInfo.ProgramCounter += b;
+                            callInfo.ProgramCounter += bs.B;
                         }
                         goto Next;
-                    }
                     case OpCode.JmpNot:
-                    {
-                        callInfo.ReadOperand(sequence, out byte a, out short b);
-                        if (registers[a].Falsy)
+                        bs = OperandBS.Read(sequence, ref callInfo.ProgramCounter);
+                        if (registers[bs.A].Falsy)
                         {
-                            callInfo.ProgramCounter += b;
+                            callInfo.ProgramCounter += bs.B;
                         }
                         goto Next;
-                    }
                     case OpCode.JmpNil:
-                    {
-                        callInfo.ReadOperand(sequence, out byte a, out short b);
-                        if (registers[a].IsNil)
+                        bs = OperandBS.Read(sequence, ref callInfo.ProgramCounter);
+                        if (registers[bs.A].IsNil)
                         {
-                            callInfo.ProgramCounter += b;
+                            callInfo.ProgramCounter += bs.B;
                         }
                         goto Next;
-                    }
                     case OpCode.JmpUw:
                     {
-                        callInfo.ReadOperand(sequence, out short a);
-                        var newProgramCounter = callInfo.ProgramCounter + a;
+                        s = ReadOperandS(sequence, ref callInfo.ProgramCounter);
+                        var newProgramCounter = callInfo.ProgramCounter + s;
                         if (irep.TryFindCatchHandler(callInfo.ProgramCounter, CatchHandlerType.Ensure, out var catchHandler))
                         {
                             // avoiding a jump from a catch handler into the same handler
@@ -696,9 +616,7 @@ partial class MRubyState
                         goto Next;
                     }
                     case OpCode.Except:
-                    {
-                        callInfo.ReadOperand(sequence, out byte a);
-
+                        a = ReadOperandB(sequence, ref callInfo.ProgramCounter);
                         registers[a] = Exception switch
                         {
                             MRubyRaiseException x => MRubyValue.From(x.ExceptionObject),
@@ -707,17 +625,16 @@ partial class MRubyState
                         };
                         Exception = null;
                         goto Next;
-                    }
                     case OpCode.Rescue:
                     {
-                        callInfo.ReadOperand(sequence, out byte a, out byte b);
-                        var exceptionObjectValue = registers[a];
-                        var exceptionClassValue = registers[b];
+                        bb = OperandBB.Read(sequence, ref callInfo.ProgramCounter);
+                        var exceptionObjectValue = registers[bb.A];
+                        var exceptionClassValue = registers[bb.B];
                         switch (exceptionClassValue.VType)
                         {
                             case MRubyVType.Class:
                             case MRubyVType.Module:
-                                break;
+                            break;
                             default:
                                 var ex = new RException(
                                     NewString("class or module required for rescue clause"u8),
@@ -730,13 +647,12 @@ partial class MRubyState
                                 throw Exception;
                         }
 
-                        var c = exceptionClassValue.As<RClass>();
-                        registers[b] = MRubyValue.From(KindOf(exceptionObjectValue, c));
+                        registers[bb.B] = MRubyValue.From(KindOf(exceptionObjectValue, exceptionClassValue.As<RClass>()));
                         goto Next;
                     }
                     case OpCode.RaiseIf:
                     {
-                        callInfo.ReadOperand(sequence, out byte a);
+                        a = ReadOperandB(sequence, ref callInfo.ProgramCounter);
                         var exceptionValue = registers[a];
                         switch (exceptionValue.Object)
                         {
@@ -779,7 +695,8 @@ partial class MRubyState
                                         return registers[irep.LocalVariables.Length];
                                     }
                                 }
-                                break;
+
+                            break;
                             case RException exceptionObject:
                                 Exception = new MRubyRaiseException(this, exceptionObject, context.CallDepth);
                                 if (TryRaiseJump(ref callInfo))
@@ -789,7 +706,7 @@ partial class MRubyState
                                 throw Exception;
                             default:
                                 Exception = null;
-                                break;
+                            break;
                         }
                         goto Next;
                     }
@@ -798,16 +715,15 @@ partial class MRubyState
                     case OpCode.Send:
                     case OpCode.SendB:
                     {
-                        callInfo.ReadOperand(sequence, out var a, out var b, out var c);
-
+                        bbb = OperandBBB.Read(sequence, ref callInfo.ProgramCounter);
                         var currentStackPointer = callInfo.StackPointer;
 
                         callInfo = ref context.PushCallStack();
                         callInfo.CallerType = CallerType.InVmLoop;
-                        callInfo.StackPointer = currentStackPointer + a;
-                        callInfo.MethodId = irep.Symbols[b];
-                        callInfo.ArgumentCount = (byte)(c & 0xf);
-                        callInfo.KeywordArgumentCount = (byte)((c >> 4) & 0xf);
+                        callInfo.StackPointer = currentStackPointer + bbb.A;
+                        callInfo.MethodId = irep.Symbols[bbb.B];
+                        callInfo.ArgumentCount = (byte)(bbb.C & 0xf);
+                        callInfo.KeywordArgumentCount = (byte)((bbb.C >> 4) & 0xf);
 
                         var nextRegisters = context.Stack.AsSpan(callInfo.StackPointer);
                         var blockOffset = callInfo.BlockArgumentOffset;
@@ -865,10 +781,10 @@ partial class MRubyState
                         {
                             method = PrepareMethodMissing(ref callInfo, self, methodId,
                                 opcode == OpCode.Super
-                                    ? static (state,self,methodId) =>  state.Raise(Names.NoMethodError, state.NewString($"no superclass method '{state.NameOf(methodId)}' for {state.StringifyAny(self)}"))
+                                    ? static (state, self, methodId) => state.Raise(Names.NoMethodError, state.NewString($"no superclass method '{state.NameOf(methodId)}' for {state.StringifyAny(self)}"))
                                     : null);
                         }
-
+                        
                         callInfo.Scope = receiverClass;
                         callInfo.Proc = method.Proc;
 
@@ -932,7 +848,7 @@ partial class MRubyState
                     }
                     case OpCode.Super:
                     {
-                        callInfo.ReadOperand(sequence, out byte a, out byte b);
+                        bb = OperandBB.Read(sequence, ref callInfo.ProgramCounter);
                         var targetClass = callInfo.Scope.TargetClass;
                         var methodId = callInfo.MethodId;
                         if (methodId == default || targetClass == null!)
@@ -948,23 +864,23 @@ partial class MRubyState
                             Raise(Names.TypeError, "self has wrong type to call super in this context"u8);
                         }
 
-                        registers[a] = receiver;
+                        registers[bb.A] = receiver;
 
                         // Jump to send
-                        var nextStackPointer = callInfo.StackPointer + a;
+                        var nextStackPointer = callInfo.StackPointer + bb.A;
                         callInfo = ref context.PushCallStack();
                         callInfo.CallerType = CallerType.InVmLoop;
                         callInfo.Scope = targetClass.Super;
                         callInfo.StackPointer = nextStackPointer;
                         callInfo.MethodId = methodId;
-                        callInfo.ArgumentCount = (byte)(b & 0xf);
-                        callInfo.KeywordArgumentCount = (byte)((b >> 4) & 0xf);
+                        callInfo.ArgumentCount = (byte)(bb.B & 0xf);
+                        callInfo.KeywordArgumentCount = (byte)((bb.B >> 4) & 0xf);
                         goto case OpCode.SendInternal;
                     }
                     case OpCode.Enter:
                     {
-                        callInfo.ReadOperand(sequence, out byte a, out byte b, out byte c);
-                        var bits = (uint)a << 16 | (uint)b << 8 | c;
+                        bbb = OperandBBB.Read(sequence, ref callInfo.ProgramCounter);
+                        var bits = (uint)bbb.A << 16 | (uint)bbb.B << 8 | bbb.C;
                         var aspec = new ArgumentSpec(bits);
 
                         var argc = callInfo.ArgumentCount;
@@ -1015,7 +931,7 @@ partial class MRubyState
                                     case MRubyCallInfo.CallMaxArgs:
                                         // push kdict to packed arguments
                                         registers[1].As<RArray>().Push(kdict);
-                                        break;
+                                    break;
                                     case MRubyCallInfo.CallMaxArgs - 1:
                                     {
                                         // pack arguments and kdict
@@ -1026,8 +942,8 @@ partial class MRubyState
                                     }
                                     default:
                                         callInfo.ArgumentCount++;
-                                        argc++;    // include kdict in normal arguments
-                                        break;
+                                        argc++; // include kdict in normal arguments
+                                    break;
                                 }
                             }
                             kdict = MRubyValue.Nil;
@@ -1146,9 +1062,9 @@ partial class MRubyState
                     }
                     case OpCode.KArg:
                     {
-                        callInfo.ReadOperand(sequence, out byte a, out byte b);
+                        bb = OperandBB.Read(sequence, ref callInfo.ProgramCounter);
                         // mrb_value k = mrb_symbol_value(irep->syms[b]);
-                        var key = MRubyValue.From(irep.Symbols[b]);
+                        var key = MRubyValue.From(irep.Symbols[bb.B]);
                         var kargOffset = callInfo.KeywordArgumentOffset;
                         if (kargOffset < 0)
                         {
@@ -1162,16 +1078,16 @@ partial class MRubyState
                             Raise(Names.ArgumentError, NewString($"missing keyword: {Stringify(key)}"));
                         }
 
-                        registers[a] = value;
+                        registers[bb.A] = value;
                         kdict.As<RHash>().Delete(key);
                         goto Next;
                     }
                     case OpCode.KeyP:
                     {
-                        callInfo.ReadOperand(sequence, out byte a, out byte b);
-                        var key = MRubyValue.From(irep.Symbols[b]);
+                        bb = OperandBB.Read(sequence, ref callInfo.ProgramCounter);
+                        var key = MRubyValue.From(irep.Symbols[bb.B]);
                         var kdict = registers[callInfo.KeywordArgumentOffset];
-                        registers[a] = MRubyValue.From(kdict.As<RHash>().TryGetValue(key, out _));
+                        registers[bb.A] = MRubyValue.From(kdict.As<RHash>().TryGetValue(key, out _));
                         goto Next;
                     }
                     case OpCode.KeyEnd:
@@ -1188,7 +1104,7 @@ partial class MRubyState
                     }
                     case OpCode.Return:
                     {
-                        callInfo.ReadOperand(sequence, out byte a);
+                        a = ReadOperandB(sequence, ref callInfo.ProgramCounter);
                         var returnValue = registers[a];
                         if (TryReturnJump(ref callInfo, context.CallDepth, registers[a]))
                         {
@@ -1204,7 +1120,7 @@ partial class MRubyState
                             goto case OpCode.Return;
                         }
 
-                        callInfo.ReadOperand(sequence, out byte a);
+                        a = ReadOperandB(sequence, ref callInfo.ProgramCounter);
                         var dest = callInfo.Proc.FindReturningDestination(out var env);
                         if (dest.Scope is not REnv destEnv || destEnv.Context == context)
                         {
@@ -1233,7 +1149,7 @@ partial class MRubyState
                             goto case OpCode.Return;
                         }
 
-                        callInfo.ReadOperand(sequence, out byte a);
+                        a = ReadOperandB(sequence, ref callInfo.ProgramCounter);
                         if (callInfo.Proc is { } proc &&
                             !proc.HasFlag(MRubyObjectFlags.ProcOrphan) &&
                             proc.Scope is REnv env && env.Context == context)
@@ -1257,7 +1173,8 @@ partial class MRubyState
                     }
                     case OpCode.BlkPush:
                     {
-                        callInfo.ReadOperand(sequence, out byte a, out short b);
+                        bs = OperandBS.Read(sequence, ref callInfo.ProgramCounter);
+                        var b = bs.B;
                         var m1 = (b >> 11) & 0x3f;
                         var r = (b >> 10) & 0x1;
                         var m2 = (b >> 5) & 0x1f;
@@ -1287,31 +1204,31 @@ partial class MRubyState
                         {
                             Raise(Names.LocalJumpError, "unexpected yield"u8);
                         }
-                        registers[a] = block;
+                        registers[bs.A] = block;
                         goto Next;
                     }
                     case OpCode.Add:
+                        a = ReadOperandB(sequence, ref callInfo.ProgramCounter);
+                        registerA = ref registers[a];
+                        var rhs = Unsafe.Add(ref registerA, 1);
                     {
-                        callInfo.ReadOperand(sequence, out byte a);
-                        var lhs = registers[a];
-                        var rhs = registers[a + 1];
-                        switch (lhs.VType, rhs.VType)
+                        switch (registerA.VType, rhs.VType)
                         {
                             case (MRubyVType.Integer, MRubyVType.Integer):
                                 // TODO: overflow handling
-                                registers[a] = NewInteger(lhs.IntegerValue + rhs.IntegerValue);
+                                registerA = NewInteger(registerA.IntegerValue + rhs.IntegerValue);
                                 goto Next;
                             case (MRubyVType.Integer, MRubyVType.Float):
-                                registers[a] = MRubyValue.From(lhs.IntegerValue + rhs.FloatValue);
+                                registerA = MRubyValue.From(registerA.IntegerValue + rhs.FloatValue);
                                 goto Next;
                             case (MRubyVType.Float, MRubyVType.Integer):
-                                registers[a] = MRubyValue.From(lhs.FloatValue + rhs.IntegerValue);
+                                registerA = MRubyValue.From(registerA.FloatValue + rhs.IntegerValue);
                                 goto Next;
                             case (MRubyVType.Float, MRubyVType.Float):
-                                registers[a] = MRubyValue.From(lhs.FloatValue + rhs.FloatValue);
+                                registerA = MRubyValue.From(registerA.FloatValue + rhs.FloatValue);
                                 goto Next;
                             case (MRubyVType.String, MRubyVType.String):
-                                registers[a] = MRubyValue.From(lhs.As<RString>() + rhs.As<RString>());
+                                registerA = MRubyValue.From(registerA.As<RString>() + rhs.As<RString>());
                                 goto Next;
                         }
                         // Jump to send :+
@@ -1325,79 +1242,55 @@ partial class MRubyState
                         goto case OpCode.SendInternal;
                     }
                     case OpCode.AddI:
+                    case OpCode.SubI:
+                        bb = OperandBB.Read(sequence, ref callInfo.ProgramCounter);
+                        registerA = ref registers[bb.A];
                     {
-                        callInfo.ReadOperand(sequence, out byte a, out byte b);
-                        var lhs = registers[a];
-                        switch (lhs.VType)
+                        var rV = opcode == OpCode.AddI ? bb.B : -bb.B;
+                        switch (registerA.VType)
                         {
                             case MRubyVType.Integer:
-                                registers[a] = NewInteger(lhs.IntegerValue + b);
+                                registerA = NewInteger(registerA.IntegerValue + rV);
                                 goto Next;
                             case MRubyVType.Float:
-                                registers[a] = MRubyValue.From(lhs.FloatValue + b);
+                                registerA = MRubyValue.From(registerA.FloatValue + rV);
                                 goto Next;
                         }
 
-                        // Jump to send :+
-                        registers[a + 1] = MRubyValue.From(b);
-                        var nextStackPointer = callInfo.StackPointer + a;
+                        // Jump to send :+ or :-
+                        Unsafe.Add(ref registerA, 1) = MRubyValue.From(rV);
+                        var nextStackPointer = callInfo.StackPointer + bb.A;
                         callInfo = ref context.PushCallStack();
                         callInfo.CallerType = CallerType.InVmLoop;
                         callInfo.StackPointer = nextStackPointer;
-                        callInfo.MethodId = Names.OpAdd;
+                        callInfo.MethodId = opcode == OpCode.AddI ? Names.OpAdd : Names.OpSub;
                         callInfo.ArgumentCount = 1;
                         callInfo.KeywordArgumentCount = 0;
                         goto case OpCode.SendInternal;
                     }
                     case OpCode.Sub:
                     {
-                        callInfo.ReadOperand(sequence, out byte a);
-                        var lhs = registers[a];
-                        var rhs = registers[a + 1];
-                        switch (lhs.VType, rhs.VType)
+                        a = ReadOperandB(sequence, ref callInfo.ProgramCounter);
+                        registerA = ref registers[a];
+                        rhs = Unsafe.Add(ref registerA, 1);
+                        switch (registerA.VType, rhs.VType)
                         {
                             case (MRubyVType.Integer, MRubyVType.Integer):
                                 // TODO: overflow handling
-                                registers[a] = NewInteger(lhs.IntegerValue - rhs.IntegerValue);
+                                registerA = NewInteger(registerA.IntegerValue - rhs.IntegerValue);
                                 goto Next;
                             case (MRubyVType.Integer, MRubyVType.Float):
-                                registers[a] = MRubyValue.From(lhs.IntegerValue - rhs.FloatValue);
+                                registerA = MRubyValue.From(registerA.IntegerValue - rhs.FloatValue);
                                 goto Next;
                             case (MRubyVType.Float, MRubyVType.Integer):
-                                registers[a] = MRubyValue.From(lhs.FloatValue - rhs.IntegerValue);
+                                registerA = MRubyValue.From(registerA.FloatValue - rhs.IntegerValue);
                                 goto Next;
                             case (MRubyVType.Float, MRubyVType.Float):
-                                registers[a] = MRubyValue.From(lhs.FloatValue - rhs.FloatValue);
+                                registerA = MRubyValue.From(registerA.FloatValue - rhs.FloatValue);
                                 goto Next;
                         }
 
                         // Jump to send :-
-                        var nextStackPointer = callInfo.StackPointer + a;
-                        callInfo = ref context.PushCallStack();
-                        callInfo.CallerType = CallerType.InVmLoop;
-                        callInfo.StackPointer = nextStackPointer;
-                        callInfo.MethodId = Names.OpSub;
-                        callInfo.ArgumentCount = 1;
-                        callInfo.KeywordArgumentCount = 0;
-                        goto case OpCode.SendInternal;
-                    }
-                    case OpCode.SubI:
-                    {
-                        callInfo.ReadOperand(sequence, out byte a, out byte b);
-                        var lhs = registers[a];
-                        switch (lhs.VType)
-                        {
-                            case MRubyVType.Integer:
-                                registers[a] = NewInteger(lhs.IntegerValue - b);
-                                goto Next;
-                            case MRubyVType.Float:
-                                registers[a] = MRubyValue.From(lhs.FloatValue - b);
-                                goto Next;
-                        }
-
-                        // Jump to send :-
-                        registers[a + 1] = MRubyValue.From(b);
-
                         var nextStackPointer = callInfo.StackPointer + a;
                         callInfo = ref context.PushCallStack();
                         callInfo.CallerType = CallerType.InVmLoop;
@@ -1409,23 +1302,23 @@ partial class MRubyState
                     }
                     case OpCode.Mul:
                     {
-                        callInfo.ReadOperand(sequence, out byte a);
-                        var lhs = registers[a];
-                        var rhs = registers[a + 1];
-                        switch (lhs.VType, rhs.VType)
+                        a = ReadOperandB(sequence, ref callInfo.ProgramCounter);
+                        registerA = ref registers[a];
+                        rhs = Unsafe.Add(ref registerA, 1);
+                        switch (registerA.VType, rhs.VType)
                         {
                             case (MRubyVType.Integer, MRubyVType.Integer):
                                 // TODO: overflow handling
-                                registers[a] = NewInteger(lhs.IntegerValue * rhs.IntegerValue);
+                                registerA = NewInteger(registerA.IntegerValue * rhs.IntegerValue);
                                 goto Next;
                             case (MRubyVType.Integer, MRubyVType.Float):
-                                registers[a] = MRubyValue.From(lhs.IntegerValue * rhs.FloatValue);
+                                registerA = MRubyValue.From(registerA.IntegerValue * rhs.FloatValue);
                                 goto Next;
                             case (MRubyVType.Float, MRubyVType.Integer):
-                                registers[a] = MRubyValue.From(lhs.FloatValue * rhs.IntegerValue);
+                                registerA = MRubyValue.From(registerA.FloatValue * rhs.IntegerValue);
                                 goto Next;
                             case (MRubyVType.Float, MRubyVType.Float):
-                                registers[a] = MRubyValue.From(lhs.FloatValue * rhs.FloatValue);
+                                registerA = MRubyValue.From(registerA.FloatValue * rhs.FloatValue);
                                 goto Next;
                         }
                         // Jump to send :*
@@ -1440,23 +1333,23 @@ partial class MRubyState
                     }
                     case OpCode.Div:
                     {
-                        callInfo.ReadOperand(sequence, out byte a);
-                        var lhs = registers[a];
-                        var rhs = registers[a + 1];
-                        switch (lhs.VType, rhs.VType)
+                        a = ReadOperandB(sequence, ref callInfo.ProgramCounter);
+                        registerA = ref registers[a];
+                        rhs = Unsafe.Add(ref registerA, 1);
+                        switch (registerA.VType, rhs.VType)
                         {
                             case (MRubyVType.Integer, MRubyVType.Integer):
                                 // TODO: overflow handling
-                                registers[a] = NewInteger(lhs.IntegerValue / rhs.IntegerValue);
+                                registerA = NewInteger(registerA.IntegerValue / rhs.IntegerValue);
                                 goto Next;
                             case (MRubyVType.Integer, MRubyVType.Float):
-                                registers[a] = MRubyValue.From(lhs.IntegerValue / rhs.FloatValue);
+                                registerA = MRubyValue.From(registerA.IntegerValue / rhs.FloatValue);
                                 goto Next;
                             case (MRubyVType.Float, MRubyVType.Integer):
-                                registers[a] = MRubyValue.From(lhs.FloatValue / rhs.IntegerValue);
+                                registerA = MRubyValue.From(registerA.FloatValue / rhs.IntegerValue);
                                 goto Next;
                             case (MRubyVType.Float, MRubyVType.Float):
-                                registers[a] = MRubyValue.From(lhs.FloatValue / rhs.FloatValue);
+                                registerA = MRubyValue.From(registerA.FloatValue / rhs.FloatValue);
                                 goto Next;
                         }
                         // Jump to send :/
@@ -1471,33 +1364,33 @@ partial class MRubyState
                     }
                     case OpCode.EQ:
                     {
-                        callInfo.ReadOperand(sequence, out byte a);
-                        var lhs = registers[a];
-                        var rhs = registers[a + 1];
-                        if (lhs.Equals(rhs))
+                        a = ReadOperandB(sequence, ref callInfo.ProgramCounter);
+                        registerA = ref registers[a];
+                        rhs = Unsafe.Add(ref registerA, 1);
+                        if (registerA.Equals(rhs))
                         {
-                            registers[a] = MRubyValue.True;
+                            registerA = MRubyValue.True;
                             goto Next;
                         }
-                        if (lhs.IsSymbol)
+                        if (registerA.IsSymbol)
                         {
-                            registers[a] = MRubyValue.False;
+                            registerA = MRubyValue.False;
                             goto Next;
                         }
-                        switch (lhs.VType, rhs.VType)
+                        switch (registerA.VType, rhs.VType)
                         {
                             case (MRubyVType.Integer, MRubyVType.Integer):
-                                registers[a] = MRubyValue.From(lhs.IntegerValue == rhs.IntegerValue);
+                                registerA = MRubyValue.From(registerA.IntegerValue == rhs.IntegerValue);
                                 goto Next;
                             case (MRubyVType.Integer, MRubyVType.Float):
-                                registers[a] = MRubyValue.From(lhs.IntegerValue == (long)rhs.FloatValue);
+                                registerA = MRubyValue.From(registerA.IntegerValue == (long)rhs.FloatValue);
                                 goto Next;
                             case (MRubyVType.Float, MRubyVType.Integer):
-                                registers[a] = MRubyValue.From((long)lhs.FloatValue == rhs.IntegerValue);
+                                registerA = MRubyValue.From((long)registerA.FloatValue == rhs.IntegerValue);
                                 goto Next;
                             // ReSharper disable once CompareOfFloatsByEqualityOperator
                             case (MRubyVType.Float, MRubyVType.Float):
-                                registers[a] = MRubyValue.From(lhs.FloatValue == rhs.FloatValue);
+                                registerA = MRubyValue.From(registerA.FloatValue == rhs.FloatValue);
                                 goto Next;
                         }
 
@@ -1513,23 +1406,22 @@ partial class MRubyState
                     }
                     case OpCode.LT:
                     {
-                        callInfo.ReadOperand(sequence, out byte a);
-                        var lhs = registers[a];
-                        var rhs = registers[a + 1];
-
-                        switch (lhs.VType, rhs.VType)
+                        a = ReadOperandB(sequence, ref callInfo.ProgramCounter);
+                        registerA = ref registers[a];
+                        rhs = Unsafe.Add(ref registerA, 1);
+                        switch (registerA.VType, rhs.VType)
                         {
                             case (MRubyVType.Integer, MRubyVType.Integer):
-                                registers[a] = MRubyValue.From(lhs.IntegerValue < rhs.IntegerValue);
+                                registerA = MRubyValue.From(registerA.IntegerValue < rhs.IntegerValue);
                                 goto Next;
                             case (MRubyVType.Integer, MRubyVType.Float):
-                                registers[a] = MRubyValue.From(lhs.IntegerValue < (long)rhs.FloatValue);
+                                registerA = MRubyValue.From(registerA.IntegerValue < (long)rhs.FloatValue);
                                 goto Next;
                             case (MRubyVType.Float, MRubyVType.Integer):
-                                registers[a] = MRubyValue.From((long)lhs.FloatValue < rhs.IntegerValue);
+                                registerA = MRubyValue.From((long)registerA.FloatValue < rhs.IntegerValue);
                                 goto Next;
                             case (MRubyVType.Float, MRubyVType.Float):
-                                registers[a] = MRubyValue.From(lhs.FloatValue < rhs.FloatValue);
+                                registerA = MRubyValue.From(registerA.FloatValue < rhs.FloatValue);
                                 goto Next;
                         }
 
@@ -1545,23 +1437,23 @@ partial class MRubyState
                     }
                     case OpCode.LE:
                     {
-                        callInfo.ReadOperand(sequence, out byte a);
-                        var lhs = registers[a];
-                        var rhs = registers[a + 1];
+                        a = ReadOperandB(sequence, ref callInfo.ProgramCounter);
+                        registerA = ref registers[a];
+                        rhs = Unsafe.Add(ref registerA, 1);
 
-                        switch (lhs.VType, rhs.VType)
+                        switch (registerA.VType, rhs.VType)
                         {
                             case (MRubyVType.Integer, MRubyVType.Integer):
-                                registers[a] = MRubyValue.From(lhs.IntegerValue <= rhs.IntegerValue);
+                                registerA = MRubyValue.From(registerA.IntegerValue <= rhs.IntegerValue);
                                 goto Next;
                             case (MRubyVType.Integer, MRubyVType.Float):
-                                registers[a] = MRubyValue.From(lhs.IntegerValue <= (long)rhs.FloatValue);
+                                registerA = MRubyValue.From(registerA.IntegerValue <= (long)rhs.FloatValue);
                                 goto Next;
                             case (MRubyVType.Float, MRubyVType.Integer):
-                                registers[a] = MRubyValue.From((long)lhs.FloatValue <= rhs.IntegerValue);
+                                registerA = MRubyValue.From((long)registerA.FloatValue <= rhs.IntegerValue);
                                 goto Next;
                             case (MRubyVType.Float, MRubyVType.Float):
-                                registers[a] = MRubyValue.From(lhs.FloatValue <= rhs.FloatValue);
+                                registerA = MRubyValue.From(registerA.FloatValue <= rhs.FloatValue);
                                 goto Next;
                         }
 
@@ -1577,23 +1469,23 @@ partial class MRubyState
                     }
                     case OpCode.GT:
                     {
-                        callInfo.ReadOperand(sequence, out byte a);
-                        var lhs = registers[a];
-                        var rhs = registers[a + 1];
+                        a = ReadOperandB(sequence, ref callInfo.ProgramCounter);
+                        registerA = ref registers[a];
+                        rhs = Unsafe.Add(ref registerA, 1);
 
-                        switch (lhs.VType, rhs.VType)
+                        switch (registerA.VType, rhs.VType)
                         {
                             case (MRubyVType.Integer, MRubyVType.Integer):
-                                registers[a] = MRubyValue.From(lhs.IntegerValue > rhs.IntegerValue);
+                                registerA = MRubyValue.From(registerA.IntegerValue > rhs.IntegerValue);
                                 goto Next;
                             case (MRubyVType.Integer, MRubyVType.Float):
-                                registers[a] = MRubyValue.From(lhs.IntegerValue > (long)rhs.FloatValue);
+                                registerA = MRubyValue.From(registerA.IntegerValue > (long)rhs.FloatValue);
                                 goto Next;
                             case (MRubyVType.Float, MRubyVType.Integer):
-                                registers[a] = MRubyValue.From((long)lhs.FloatValue > rhs.IntegerValue);
+                                registerA = MRubyValue.From((long)registerA.FloatValue > rhs.IntegerValue);
                                 goto Next;
                             case (MRubyVType.Float, MRubyVType.Float):
-                                registers[a] = MRubyValue.From(lhs.FloatValue > rhs.FloatValue);
+                                registerA = MRubyValue.From(registerA.FloatValue > rhs.FloatValue);
                                 goto Next;
                         }
                         // Jump to send :>
@@ -1608,23 +1500,22 @@ partial class MRubyState
                     }
                     case OpCode.GE:
                     {
-                        callInfo.ReadOperand(sequence, out byte a);
-                        var lhs = registers[a];
-                        var rhs = registers[a + 1];
-
-                        switch (lhs.VType, rhs.VType)
+                        a = ReadOperandB(sequence, ref callInfo.ProgramCounter);
+                        registerA = ref registers[a];
+                        rhs = Unsafe.Add(ref registerA, 1);
+                        switch (registerA.VType, rhs.VType)
                         {
                             case (MRubyVType.Integer, MRubyVType.Integer):
-                                registers[a] = MRubyValue.From(lhs.IntegerValue >= rhs.IntegerValue);
+                                registerA = MRubyValue.From(registerA.IntegerValue >= rhs.IntegerValue);
                                 goto Next;
                             case (MRubyVType.Integer, MRubyVType.Float):
-                                registers[a] = MRubyValue.From(lhs.IntegerValue >= (long)rhs.FloatValue);
+                                registerA = MRubyValue.From(registerA.IntegerValue >= (long)rhs.FloatValue);
                                 goto Next;
                             case (MRubyVType.Float, MRubyVType.Integer):
-                                registers[a] = MRubyValue.From((long)lhs.FloatValue >= rhs.IntegerValue);
+                                registerA = MRubyValue.From((long)registerA.FloatValue >= rhs.IntegerValue);
                                 goto Next;
                             case (MRubyVType.Float, MRubyVType.Float):
-                                registers[a] = MRubyValue.From(lhs.FloatValue >= rhs.FloatValue);
+                                registerA = MRubyValue.From(registerA.FloatValue >= rhs.FloatValue);
                                 goto Next;
                         }
                         // Jump to send :>=
@@ -1639,91 +1530,97 @@ partial class MRubyState
                     }
                     case OpCode.Array:
                     {
-                        callInfo.ReadOperand(sequence, out byte a, out byte b);
-                        var values = registers.Slice(a, b);
-                        registers[a] = MRubyValue.From(NewArray(values));
+                        bb = OperandBB.Read(sequence, ref callInfo.ProgramCounter);
+                        var values = registers.Slice(bb.A, bb.B);
+                        registers[bb.A] = MRubyValue.From(NewArray(values));
                         goto Next;
                     }
                     case OpCode.Array2:
                     {
-                        callInfo.ReadOperand(sequence, out byte a, out byte b, out byte c);
-                        var values = registers.Slice(b, c);
-                        registers[a] = MRubyValue.From(NewArray(values));
+                        bbb = OperandBBB.Read(sequence, ref callInfo.ProgramCounter);
+                        var values = registers.Slice(bbb.B, bbb.C);
+                        registers[bbb.A] = MRubyValue.From(NewArray(values));
                         goto Next;
                     }
                     case OpCode.AryCat:
                     {
-                        callInfo.ReadOperand(sequence, out byte a);
-                        var splat = SplatArray(registers[a + 1]);
-                        if (registers[a].IsNil)
+                        a = ReadOperandB(sequence, ref callInfo.ProgramCounter);
+                        registerA = ref registers[a];
+                        var splat = SplatArray(Unsafe.Add(ref registerA, 1));
+                        if (registerA.IsNil)
                         {
-                            registers[a] = splat;
+                            registerA = splat;
                         }
                         else
                         {
-                            EnsureValueType(registers[a], MRubyVType.Array);
-                            var array = registers[a].As<RArray>();
+                            EnsureValueType(registerA, MRubyVType.Array);
+                            var array = registerA.As<RArray>();
                             array.Concat(splat.As<RArray>());
                         }
                         goto Next;
                     }
                     case OpCode.ARef:
                     {
-                        callInfo.ReadOperand(sequence, out byte a, out byte b, out byte c);
-                        var v = registers[b];
+                        bbb = OperandBBB.Read(sequence, ref callInfo.ProgramCounter);
+                        registerA = ref registers[bbb.A];
+                        var v = registers[bbb.B];
                         if (v.VType == MRubyVType.Array)
                         {
-                            registers[a] = v.As<RArray>()[c];
+                            registerA = v.As<RArray>()[bbb.C];
                         }
                         else
                         {
-                            if (c == 0)
+                            if (bbb.C == 0)
                             {
-                                registers[a] = v;
+                                registerA = v;
                             }
                             else
                             {
-                                registers[a] = MRubyValue.Nil;
+                                registerA = MRubyValue.Nil;
                             }
                         }
                         goto Next;
                     }
                     case OpCode.ASet:
                     {
-                        callInfo.ReadOperand(sequence, out byte a, out byte b, out byte c);
-                        var array = registers[b].As<RArray>();
-                        array[c] = registers[a];
+                        bbb = OperandBBB.Read(sequence, ref callInfo.ProgramCounter);
+                        var array = registers[bbb.B].As<RArray>();
+                        array[bbb.C] = registers[bbb.A];
                         goto Next;
                     }
                     case OpCode.APost:
                     {
-                        callInfo.ReadOperand(sequence, out byte a, out byte pre, out byte post);
-                        var v = registers[a];
-                        if (v.Object is not RArray array)
+                        bbb = OperandBBB.Read(sequence, ref callInfo.ProgramCounter);
+                        registerA = ref registers[bbb.A];
+                        if (registerA.Object is not RArray array)
                         {
-                            array = NewArray(registers[a]);
+                            array = NewArray(registerA);
                         }
-
+                        int pre = bbb.B;
+                        int post = bbb.C;
                         if (array.Length > pre + post)
                         {
-                            var slice = array.AsSpan().Slice(pre, array.Length - pre - post);
-                            registers[a++] = MRubyValue.From(NewArray(slice));
+                            var slice = array.AsSpan().Slice(bbb.B, array.Length - pre - post);
+                            registerA = MRubyValue.From(NewArray(slice));
+                            registerA = ref Unsafe.Add(ref registerA, 1);
                             while (post-- > 0)
                             {
-                                registers[a++] = array[array.Length - post - 1];
+                                registerA = array[array.Length - post - 1];
+                                registerA = ref Unsafe.Add(ref registerA, 1);
                             }
                         }
                         else
                         {
-                            registers[a++] = MRubyValue.From(NewArray(0));
+                            registerA = MRubyValue.From(NewArray(0));
+                            registerA = ref Unsafe.Add(ref registerA, 1);
                             int i;
                             for (i = 0; i + pre < array.Length; i++)
                             {
-                                registers[a + i] = array[pre + i];
+                                Unsafe.Add(ref registerA, i) = array[pre + i];
                             }
                             while (i < post)
                             {
-                                registers[a + i] = MRubyValue.Nil;
+                                Unsafe.Add(ref registerA, i) = MRubyValue.Nil;
                                 i++;
                             }
                         }
@@ -1731,144 +1628,116 @@ partial class MRubyState
                     }
                     case OpCode.AryPush:
                     {
-                        callInfo.ReadOperand(sequence, out byte a, out byte b);
-                        var v = registers[a];
-                        EnsureNotFrozen(v);
+                        bb = OperandBB.Read(sequence, ref callInfo.ProgramCounter);
+                        registerA = ref registers[bb.A];
+                        EnsureNotFrozen(registerA);
 
-                        var array = v.As<RArray>();
-                        for (var i = 0; i < b; i++)
-                        {
-                            array.Push(registers[a + i + 1]);
-                        }
+                        var array = registerA.As<RArray>();
+                        array.PushRange(registers.Slice(bb.A+1, bb.B));
                         goto Next;
                     }
                     case OpCode.ArySplat:
-                    {
-                        callInfo.ReadOperand(sequence, out byte a);
-                        registers[a] = SplatArray(registers[a]);
+                        a = ReadOperandB(sequence, ref callInfo.ProgramCounter);
+                        registerA = ref registers[a];
+                        registerA = SplatArray(registerA);
                         goto Next;
-                    }
                     case OpCode.Intern:
-                    {
-                        callInfo.ReadOperand(sequence, out byte a);
-                        registers[a] = MRubyValue.From(Intern(registers[a].As<RString>()));
+                        a = ReadOperandB(sequence, ref callInfo.ProgramCounter);
+                        registerA = ref registers[a];
+                        registerA = MRubyValue.From(Intern(registerA.As<RString>()));
                         goto Next;
-                    }
                     case OpCode.Symbol:
                     {
-                        callInfo.ReadOperand(sequence, out byte a, out byte b);
-                        var name = irep.PoolValues[b].As<RString>();
-                        registers[a] = MRubyValue.From(Intern(name));
+                        bb = OperandBB.Read(sequence, ref callInfo.ProgramCounter);
+                        //var name = irep.PoolValues[bb.B].As<RString>();
+                        registers[bb.A] = MRubyValue.From(Intern(irep.PoolValues[bb.B].As<RString>()));
                         goto Next;
                     }
                     case OpCode.String:
                     {
-                        callInfo.ReadOperand(sequence, out byte a, out byte b);
-                        var str = irep.PoolValues[b].As<RString>();
-                        registers[a] = MRubyValue.From(str.Dup());
+                        bb = OperandBB.Read(sequence, ref callInfo.ProgramCounter);
+                        var str = irep.PoolValues[bb.B].As<RString>();
+                        registers[bb.A] = MRubyValue.From(str.Dup());
                         goto Next;
                     }
                     case OpCode.StrCat:
-                    {
-                        callInfo.ReadOperand(sequence, out byte a);
-                        var v1 = registers[a].As<RString>();
-                        var v2 = Stringify(registers[a + 1]);
-                        v1.Concat(v2);
+                        a = ReadOperandB(sequence, ref callInfo.ProgramCounter);
+                        registerA = ref registers[a];
+                        registerA.As<RString>().Concat(Stringify(Unsafe.Add(ref registerA, 1)));
                         goto Next;
-                    }
                     case OpCode.Hash:
                     {
-                        callInfo.ReadOperand(sequence, out byte a, out byte b);
-                        var hash = NewHash(b);
-                        var lastIndex = a + b * 2;
-                        for (var i = a; i < lastIndex; i += 2)
+                        bb = OperandBB.Read(sequence, ref callInfo.ProgramCounter);
+                        registerA = ref registers[bb.A];
+                        var hash = NewHash(bb.B);
+                        var lastIndex = bb.B * 2;
+                        for (var i = 0; i < lastIndex; i += 2)
                         {
-                            var key = registers[i];
-                            var value = registers[i + 1];
-                            hash.Add(key, value);
+                            hash.Add(Unsafe.Add(ref registerA, i), Unsafe.Add(ref registerA, i + 1));
                         }
-                        registers[a] = MRubyValue.From(hash);
+
+                        registerA = MRubyValue.From(hash);
                         goto Next;
                     }
                     case OpCode.HashAdd:
                     {
-                        callInfo.ReadOperand(sequence, out byte a, out byte b);
-                        var hashValue = registers[a];
-                        var lastIndex = a + b * 2;
+                        bb = OperandBB.Read(sequence, ref callInfo.ProgramCounter);
+                        registerA = ref registers[bb.A];
+                        var hashValue = registerA;
+                        var lastIndex = bb.B * 2 + 1;
 
                         EnsureValueType(hashValue, MRubyVType.Hash);
                         var hash = hashValue.As<RHash>();
-                        for (var i = a; i < lastIndex; i += 2)
+                        for (var i = 1; i < lastIndex; i += 2)
                         {
-                            var key = registers[i];
-                            var value = registers[i + 1];
-                            hash.Add(key, value);
+                            hash.Add(Unsafe.Add(ref registerA, i), Unsafe.Add(ref registerA, i + 1));
                         }
                         goto Next;
                     }
                     case OpCode.HashCat:
-                    {
-                        callInfo.ReadOperand(sequence, out byte a);
-                        var lhs = registers[a];
-                        var rhs = registers[a + 1];
-                        EnsureNotFrozen(lhs);
-                        lhs.As<RHash>().Merge(rhs.As<RHash>());
+                        a = sequence[++callInfo.ProgramCounter];
+                        ++callInfo.ProgramCounter;
+                        registerA = ref registers[a];
+                        EnsureNotFrozen(registerA);
+                        registerA.As<RHash>().Merge(Unsafe.Add(ref registerA, 1).As<RHash>());
                         goto Next;
-                    }
                     case OpCode.Lambda:
-                    {
-                        callInfo.ReadOperand(sequence, out byte a, out byte b);
-                        var proc = NewClosure(irep.Children[b]);
-                        proc.SetFlag(MRubyObjectFlags.ProcStrict);
-                        registers[a] = MRubyValue.From(proc);
-                        goto Next;
-                    }
                     case OpCode.Block:
-                    {
-                        callInfo.ReadOperand(sequence, out byte a, out byte b);
-                        var proc = NewClosure(irep.Children[b]);
-                        registers[a] = MRubyValue.From(proc);
-                        goto Next;
-                    }
                     case OpCode.Method:
                     {
-                        callInfo.ReadOperand(sequence, out byte a, out byte b);
-                        var proc = NewProc(irep.Children[b]);
-                        proc.SetFlag(MRubyObjectFlags.ProcStrict);
-                        proc.SetFlag(MRubyObjectFlags.ProcScope);
-                        registers[a] = MRubyValue.From(proc);
+                        bb = OperandBB.Read(sequence, ref callInfo.ProgramCounter);
+                        var proc = NewClosure(irep.Children[bb.B]);
+                        if (opcode == OpCode.Lambda)
+                            proc.SetFlag(MRubyObjectFlags.ProcStrict);
+                        else if (opcode == OpCode.Method)
+                        {
+                            proc.SetFlag(MRubyObjectFlags.ProcStrict);
+                            proc.SetFlag(MRubyObjectFlags.ProcScope);
+                        }
+                        registers[bb.A] = MRubyValue.From(proc);
                         goto Next;
                     }
                     case OpCode.RangeInc:
-                    {
-                        callInfo.ReadOperand(sequence, out byte a);
-                        var begin = registers[a];
-                        var end = registers[a + 1];
-                        var range = new RRange(begin, end, false, RangeClass);
-                        registers[a] = MRubyValue.From(range);
-                        goto Next;
-                    }
                     case OpCode.RangeExc:
+                        a = ReadOperandB(sequence, ref callInfo.ProgramCounter);
+                        registerA = ref registers[a];
                     {
-                        callInfo.ReadOperand(sequence, out byte a);
-                        var begin = registers[a];
-                        var end = registers[a + 1];
-                        var range = new RRange(begin, end, true, RangeClass);
+                        var begin = registerA;
+                        var end = Unsafe.Add(ref registerA, 1);
+                        var range = new RRange(begin, end, opcode == OpCode.RangeExc, RangeClass);
                         registers[a] = MRubyValue.From(range);
                         goto Next;
                     }
                     case OpCode.OClass:
-                    {
-                        callInfo.ReadOperand(sequence, out byte a);
+                        a = ReadOperandB(sequence, ref callInfo.ProgramCounter);
                         registers[a] = MRubyValue.From(ObjectClass);
                         goto Next;
-                    }
                     case OpCode.Class:
                     {
-                        callInfo.ReadOperand(sequence, out byte a, out byte b);
-                        var id = irep.Symbols[b];
-                        var outer = registers[a];
-                        var super = registers[a + 1];
+                        bb = OperandBB.Read(sequence, ref callInfo.ProgramCounter);
+                        var id = irep.Symbols[bb.B];
+                        var outer = registers[bb.A];
+                        var super = registers[bb.A + 1];
 
                         var outerClass = outer.IsNil
                             ? callInfo.Proc?.Scope?.TargetClass ?? ObjectClass
@@ -1879,9 +1748,9 @@ partial class MRubyState
                         RClass definedClass;
                         if (!super.IsNil)
                         {
-                            if (super.Object is RClass { VType: MRubyVType.Class } s)
+                            if (super.Object is RClass sc)
                             {
-                                superClass = s;
+                                superClass = sc;
                             }
                             else
                             {
@@ -1913,17 +1782,17 @@ partial class MRubyState
                             definedClass = DefineClass(id, superClass, superClass.InstanceVType, outerClass);
                             ClassInheritedHook(superClass.GetRealClass(), definedClass);
                         }
-                        registers[a] = MRubyValue.From(definedClass);
+                        registers[bb.A] = MRubyValue.From(definedClass);
                         goto Next;
                     }
                     case OpCode.Module:
                     {
-                        callInfo.ReadOperand(sequence, out byte a, out byte b);
-                        var id = irep.Symbols[b];
-                        var outer = registers[a];
-                        var outerClass = outer.IsNil
+                        bb = OperandBB.Read(sequence, ref callInfo.ProgramCounter);
+                        registerA = ref registers[bb.A];
+                        var id = irep.Symbols[bb.B];
+                        var outerClass = registerA.IsNil
                             ? callInfo.Proc?.Scope?.TargetClass ?? ObjectClass
-                            : outer.As<RClass>();
+                            : registerA.As<RClass>();
 
                         RClass definedModule;
                         if (ConstDefinedAt(id, outerClass))
@@ -1939,14 +1808,14 @@ partial class MRubyState
                         {
                             definedModule = DefineModule(id, outerClass);
                         }
-                        registers[a] = MRubyValue.From(definedModule);
+                        registerA = MRubyValue.From(definedModule);
                         goto Next;
                     }
                     case OpCode.Exec:
                     {
-                        callInfo.ReadOperand(sequence, out byte a, out byte b);
-                        var receiver = registers[a];
-                        var targetIrep = irep.Children[b];
+                        bb = OperandBB.Read(sequence, ref callInfo.ProgramCounter);
+                        var receiver = registers[bb.A];
+                        var targetIrep = irep.Children[bb.B];
 
                         // prepare closure
                         var proc = NewProc(targetIrep, receiver.As<RClass>());
@@ -1954,7 +1823,7 @@ partial class MRubyState
 
                         // prepare callstack
                         ref var nextCallInfo = ref context.PushCallStack();
-                        nextCallInfo.StackPointer = callInfo.StackPointer + a;
+                        nextCallInfo.StackPointer = callInfo.StackPointer + bb.A;
                         nextCallInfo.CallerType = CallerType.InVmLoop;
                         nextCallInfo.Scope = receiver.As<RClass>();
                         nextCallInfo.Proc = proc;
@@ -1977,29 +1846,29 @@ partial class MRubyState
                     }
                     case OpCode.Def:
                     {
-                        callInfo.ReadOperand(sequence, out byte a, out byte b);
-                        var target = registers[a].As<RClass>();
-                        var proc = registers[a + 1].As<RProc>();
-                        var methodId = irep.Symbols[b];
+                        bb = OperandBB.Read(sequence, ref callInfo.ProgramCounter);
+                        var target = registers[bb.A].As<RClass>();
+                        var proc = registers[bb.A + 1].As<RProc>();
+                        var methodId = irep.Symbols[bb.B];
 
                         DefineMethod(target, methodId, new MRubyMethod(proc));
                         MethodAddedHook(target, methodId);
-                        registers[a] = MRubyValue.From(methodId);
+                        registers[bb.A] = MRubyValue.From(methodId);
                         goto Next;
                     }
                     case OpCode.Alias:
                     {
-                        callInfo.ReadOperand(sequence, out byte a, out byte b);
+                        bb = OperandBB.Read(sequence, ref callInfo.ProgramCounter);
                         var c = callInfo.Scope.TargetClass;
-                        var newMethodId = irep.Symbols[a];
-                        var oldMethodId = irep.Symbols[b];
+                        var newMethodId = irep.Symbols[bb.A];
+                        var oldMethodId = irep.Symbols[bb.B];
                         AliasMethod(c, newMethodId, oldMethodId);
                         MethodAddedHook(c, newMethodId);
                         goto Next;
                     }
                     case OpCode.Undef:
                     {
-                        callInfo.ReadOperand(sequence, out byte a);
+                        a = ReadOperandB(sequence, ref callInfo.ProgramCounter);
                         var c = callInfo.Scope.TargetClass;
                         var methodId = irep.Symbols[a];
                         UndefMethod(c, methodId);
@@ -2007,20 +1876,21 @@ partial class MRubyState
                     }
                     case OpCode.SClass:
                     {
-                        callInfo.ReadOperand(sequence, out byte a);
-                        var result = SingletonClassOf(registers[a]);
-                        registers[a] = result != null ? MRubyValue.From(result) : MRubyValue.Nil;
+                        a = ReadOperandB(sequence, ref callInfo.ProgramCounter);
+                        registerA = ref registers[a];
+                        var result = SingletonClassOf(registerA);
+                        registerA = result != null ? MRubyValue.From(result) : MRubyValue.Nil;
                         goto Next;
                     }
                     case OpCode.TClass:
                     {
-                        callInfo.ReadOperand(sequence, out byte a);
+                        a = ReadOperandB(sequence, ref callInfo.ProgramCounter);
                         registers[a] = MRubyValue.From(callInfo.Scope.TargetClass);
                         goto Next;
                     }
                     case OpCode.Err:
                     {
-                        callInfo.ReadOperand(sequence, out byte a);
+                        a = ReadOperandB(sequence, ref callInfo.ProgramCounter);
                         var message = irep.PoolValues[a];
                         Raise(Names.LocalJumpError, message.As<RString>());
                         goto Next;
@@ -2068,6 +1938,21 @@ partial class MRubyState
                 }
             }
         }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    static byte ReadOperandB(ReadOnlySpan<byte> sequence, ref int pc)
+    {
+        pc += 2;
+        var result = Unsafe.Add(ref MemoryMarshal.GetReference(sequence), pc - 1);
+        return result;
+    }
+
+    /// I don't know why, but introducing this method makes the code faster.
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    static short ReadOperandS(ReadOnlySpan<byte> sequence, ref int pc)
+    {
+        return OperandS.Read(sequence, ref pc).A;
     }
 
     bool TryReturnJump(ref MRubyCallInfo callInfo, int returnDepth, MRubyValue returnValue)
@@ -2192,7 +2077,7 @@ partial class MRubyState
         ref MRubyCallInfo callInfo,
         MRubyValue receiver,
         Symbol methodId,
-        Action<MRubyState,MRubyValue,Symbol>? raise = null)
+        Action<MRubyState, MRubyValue, Symbol>? raise = null)
     {
         var receiverClass = ClassOf(receiver);
         var args = context.GetRestArg(ref callInfo, 0);
@@ -2247,7 +2132,7 @@ partial class MRubyState
         {
             if (raise != null)
             {
-                raise(this,receiver, methodId);
+                raise(this, receiver, methodId);
             }
             else
             {
