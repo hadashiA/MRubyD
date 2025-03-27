@@ -30,17 +30,22 @@ Dump(mRubyDState.IntegerClass.MethodTable[mRubyDState.Intern("times"u8)].Proc!.I
 Console.WriteLine(Encoding.UTF8.GetString(arrayBufferWriter.WrittenSpan));
 File.WriteAllBytes(GetAbsolutePath("dump.text"),arrayBufferWriter.WrittenSpan);
 
-if(File.Exists(GetAbsolutePath("jit.text")))
+var newJIitPath = GetAbsolutePath("jit.text");
+var lastJitPath = GetAbsolutePath("jit_last.text");
+
+if(File.Exists(newJIitPath))
 {
-    var lastBytes = File.ReadAllBytes(GetAbsolutePath("jit.text"));
-    Console.WriteLine("Last JIT bytes:" + lastBytes.Length);
-    File.WriteAllBytes(GetAbsolutePath("jit_last.text"), lastBytes);
+    if(File.Exists(lastJitPath)){
+        File.Delete(lastJitPath);
+    }
+    File.Move(newJIitPath,lastJitPath);
+    Console.WriteLine("Last:" + File.ReadAllLines(lastJitPath)[^1]);
 }
 var method = typeof(MRubyState).GetMethod("Exec", BindingFlags.Instance | BindingFlags.NonPublic,[typeof(Irep),typeof(int),typeof(int)])!;
 using var disassembler = JitDisassembler.Create();
 var nextJitText = disassembler.Disassemble(method);
-File.WriteAllText(GetAbsolutePath("jit.text"),nextJitText);
-Console.WriteLine("New JIT bytes:" + Encoding.UTF8.GetByteCount(nextJitText));
+File.WriteAllText(newJIitPath,nextJitText);
+Console.WriteLine("New:" + nextJitText.Split("\n")[^1]);
 
 void Dump(Irep irep)
 {
