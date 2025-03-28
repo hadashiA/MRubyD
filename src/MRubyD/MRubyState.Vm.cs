@@ -1414,14 +1414,7 @@ partial class MRubyState
                                     registerA = MRubyValue.From(((long)registerA.FloatValue < rhs.IntegerValue) ^ opcode == OpCode.GE);
                                     goto Next;
                                 }
-                                if (double.IsNaN(registerA.FloatValue) || double.IsNaN(rhs.FloatValue))
-                                {
-                                    registerA = MRubyValue.False;
-                                }
-                                else
-                                {
-                                    registerA = MRubyValue.From((registerA.FloatValue < rhs.FloatValue) ^ opcode == OpCode.GE);
-                                }
+                                registerA =MRubyValue.From( opcode==OpCode.LT ? registerA.FloatValue < rhs.FloatValue: registerA.FloatValue >= rhs.FloatValue);
                             }
                             goto Next;
                         }
@@ -1431,7 +1424,7 @@ partial class MRubyState
                         callInfo = ref context.PushCallStack();
                         callInfo.CallerType = CallerType.InVmLoop;
                         callInfo.StackPointer = nextStackPointer;
-                        callInfo.MethodId = Names.OpLe;
+                        callInfo.MethodId = opcode==OpCode.LT?Names.OpLt:Names.OpGe;
                         callInfo.ArgumentCount = 1;
                         callInfo.KeywordArgumentCount = 0;
                         goto case OpCode.SendInternal;
@@ -1461,14 +1454,7 @@ partial class MRubyState
                                     registerA = MRubyValue.From(((long)registerA.FloatValue <= rhs.IntegerValue) ^ opcode == OpCode.GT);
                                     goto Next;
                                 }
-                                if (double.IsNaN(registerA.FloatValue) || double.IsNaN(rhs.FloatValue))
-                                {
-                                    registerA = MRubyValue.False;
-                                }
-                                else
-                                {
-                                    registerA = MRubyValue.From((registerA.FloatValue <= rhs.FloatValue) ^ opcode == OpCode.GT);
-                                }
+                                registerA =MRubyValue.From(opcode==OpCode.LE ? registerA.FloatValue <= rhs.FloatValue: registerA.FloatValue > rhs.FloatValue);
                             }
                             goto Next;
                         }
@@ -1478,7 +1464,7 @@ partial class MRubyState
                         callInfo = ref context.PushCallStack();
                         callInfo.CallerType = CallerType.InVmLoop;
                         callInfo.StackPointer = nextStackPointer;
-                        callInfo.MethodId = Names.OpLe;
+                        callInfo.MethodId = opcode==OpCode.LE?Names.OpLe:Names.OpGt;
                         callInfo.ArgumentCount = 1;
                         callInfo.KeywordArgumentCount = 0;
                         goto case OpCode.SendInternal;
