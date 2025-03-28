@@ -32,12 +32,12 @@ partial class MRubyState
 
     public MRubyValue NewInteger(long x)
     {
-        if (MRubyValue.Fixable(x))
-        {
-            return MRubyValue.From(x);
-        }
-        var i = new RInteger((nint)x, IntegerClass);
-        return MRubyValue.From(i);
+        // if (MRubyValue.Fixable(x))
+        // {
+        //     return MRubyValue.From(x);
+        // }
+        // var i = new RInteger((nint)x, IntegerClass);
+        return MRubyValue.From(x);
     }
 
     public Symbol ToSymbol(MRubyValue value)
@@ -317,8 +317,10 @@ partial class MRubyState
 
     public RString InspectObject(MRubyValue value)
     {
-        if (value.Object is RObject obj)
+        
+        if (value.Object is { } obj)
         {
+            if(obj is RString str)return str;
             if (obj.InstanceVariables.Length > 0)
             {
                 var s = NewString($"-<{NameOf(obj.Class)}:{obj.GetHashCode()} ");

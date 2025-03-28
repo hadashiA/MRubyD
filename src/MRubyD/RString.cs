@@ -1,6 +1,7 @@
 using System;
 using System.Runtime.CompilerServices;
 using System.Text;
+using MRubyD.Internals;
 
 namespace MRubyD;
 
@@ -53,7 +54,7 @@ public class RString : RObject, ISpanFormattable, IUtf8SpanFormattable, IEquatab
     }
 
     internal RString(int capacity, RClass stringClass)
-        : base(MRubyVType.String, stringClass)
+        : base(InternalMRubyType.String, stringClass)
     {
         buffer = new byte[capacity];
         Length = 0;
@@ -61,7 +62,7 @@ public class RString : RObject, ISpanFormattable, IUtf8SpanFormattable, IEquatab
     }
 
     internal RString(ReadOnlySpan<byte> utf8, RClass stringClass)
-        : base(MRubyVType.String, stringClass)
+        : base(InternalMRubyType.String, stringClass)
     {
         buffer = new byte[utf8.Length];
         Length = utf8.Length;
@@ -69,14 +70,14 @@ public class RString : RObject, ISpanFormattable, IUtf8SpanFormattable, IEquatab
         utf8.CopyTo(buffer);
     }
 
-    RString(RString shared) : base(MRubyVType.String, shared.Class)
+    RString(RString shared) : base(InternalMRubyType.String, shared.Class)
     {
         buffer = shared.buffer;
         Length = shared.Length;
         bufferOwned = false;
     }
 
-    RString(byte[] buffer, int length, RClass stringClass) : base(MRubyVType.String, stringClass)
+    RString(byte[] buffer, int length, RClass stringClass) : base(InternalMRubyType.String, stringClass)
     {
         this.buffer = buffer;
         Length = length;

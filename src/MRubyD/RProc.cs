@@ -11,7 +11,7 @@ public interface ICallScope
 /// <summary>
 /// Closure captured context
 /// </summary>
-class REnv() : RBasic(MRubyVType.Env, default!), ICallScope
+class REnv() : RBasic(InternalMRubyType.Env, default!), ICallScope
 {
     public Memory<MRubyValue> Stack { get; set; } = Memory<MRubyValue>.Empty;
     public required int BlockArgumentOffset { get; init; }
@@ -32,7 +32,7 @@ class REnv() : RBasic(MRubyVType.Env, default!), ICallScope
     }
 }
 
-public class RProc(Irep irep, int programCounter, RClass procClass) : RObject(MRubyVType.Proc, procClass), IEquatable<RProc>
+public class RProc(Irep irep, int programCounter, RClass procClass) : RObject(InternalMRubyType.Proc, procClass), IEquatable<RProc>
 {
     public required RProc? Upper { get; init; }
     public required ICallScope? Scope

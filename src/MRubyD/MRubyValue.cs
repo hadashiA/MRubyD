@@ -1,6 +1,7 @@
 using System;
 using System.Globalization;
 using System.Runtime.CompilerServices;
+using MRubyD.Internals;
 using Utf8StringInterpolation;
 
 namespace MRubyD;
@@ -60,10 +61,10 @@ public static class MRubyVTypeExtensions
 //   object: ...PPPP P000
 public readonly struct MRubyValue : IEquatable<MRubyValue>
 {
-    public static readonly MRubyValue Nil = new(0);
-    public static readonly MRubyValue False = new(0b0100);
-    public static readonly MRubyValue True = new(0b1100);
-    public static readonly MRubyValue Undef = new(0b0001_0100);
+    public static  MRubyValue Nil => default;
+    public static  MRubyValue False => new(InternalMRubyType.False,0);
+    public static  MRubyValue True => new(InternalMRubyType.True,0);
+    public static  MRubyValue Undef => new(InternalMRubyType.Undef,0);
 
     public static bool Fixable(long value) => value >= FixnumMin &&
                                               value <= FixnumMax;
@@ -72,110 +73,125 @@ public readonly struct MRubyValue : IEquatable<MRubyValue>
 
     static readonly nint FixnumMin = nint.MinValue >> 1;
     static readonly nint FixnumMax = nint.MaxValue >> 1;
-
-    public static MRubyValue From(bool value) => value ? True : False;
+    public static MRubyValue From(bool value) =>new(value?InternalMRubyType.True:InternalMRubyType.False,0);
+    
     public static MRubyValue From(RObject obj) => new(obj);
-    public static MRubyValue From(int value) => new((value << 1) | 1);
-    public static MRubyValue From(long value) => new((value << 1) | 1);
-    public static MRubyValue From(Symbol symbol) => new(((long)symbol.Value << SymbolShift) | 0b1_0100);
+    public static MRubyValue From(RString obj) => new(obj,InternalMRubyType.String);
+    public static MRubyValue From(RArray obj) => new(obj,InternalMRubyType.Array);
+    public static MRubyValue From(RHash obj) => new(obj,InternalMRubyType.Hash);
+    public static MRubyValue From(RRange obj) => new(obj,InternalMRubyType.Range);
+    public static MRubyValue From(RClass obj) => new(obj);
+    public static MRubyValue From(RProc obj) => new(obj,InternalMRubyType.Proc);
+    public static MRubyValue From(RBreak obj) => new(obj,InternalMRubyType.Break);
+    public static MRubyValue From(long value) => new(InternalMRubyType.Integer, value);
+    public static MRubyValue From(Symbol symbol) => new(InternalMRubyType.Symbol, symbol.Value);
 
     public static MRubyValue From(double value)
     {
         // Assume that MRB_USE_FLOAT32 is not defined
         // Assume that MRB_WORDBOX_NO_FLOAT_TRUNCATE is not defined
         var bits = Unsafe.As<double, long>(ref value);
-        return new MRubyValue((bits & ~3) | 2);
+        return new MRubyValue(InternalMRubyType.Float, bits);
     }
 
     public RObject? Object
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get;
+        get => union.Object;
     }
 
-    public MRubyVType VType => this switch
-    {
-        { IsObject: true } => Object!.VType,
-        { IsTrue: true } => MRubyVType.True,
-        { IsUndef: true } => MRubyVType.Undef,
-        { IsSymbol: true } => MRubyVType.Symbol,
-        { IsFixnum: true } => MRubyVType.Integer,
-        { IsFloat: true } => MRubyVType.Float,
-        _ => default
-    };
+    public MRubyVType VType => union.IsType?(MRubyVType)(union.RawTagValue-1): Object!.VType;
+    
+    internal InternalMRubyType InternalVType => union.IsType?(union.TagValue): Object!.InternalType;
+    internal InternalMRubyType ImmediateInternalVType => union.TagValue;
 
-    public bool IsNil => bits == 0 && Object == null;
-    public bool IsFalse => bits == 0b0100;
-    public bool IsTrue => bits == 0b1100;
-    public bool IsUndef => bits == 0b0001_0100;
-    public bool IsSymbol => (bits & 0b1_1111) == 0b1_0100;
-    public bool IsFixnum => (bits & 1) == 1;
-    public bool IsObject => Object != null;
-    public bool IsImmediate => Object == null;
+    public bool IsNil => union.RawTagValue == 0;
+    public bool IsFalse =>union.TagValue==InternalMRubyType.False;
+    public bool IsTrue => union.TagValue==InternalMRubyType.True;
+    public bool IsUndef => union.TagValue==InternalMRubyType.Undef;
+    public bool IsSymbol =>union.TagValue==InternalMRubyType.Symbol;
+    //public bool IsFixnum => (bits & 1) == 1;
+    public bool IsObject => union.IsReference;
+    public bool IsImmediate => union.IsType;
 
     public T As<T>() where T : RObject => (T)Object!;
-    public bool Truthy => !IsFalse && !IsNil;
-    public bool Falsy => IsNil || IsFalse;
+    internal T UnsafeAs<T>() where T : RObject => Unsafe.As<T>(union.RawReference);
 
-    public bool IsInteger => IsFixnum ||
-                             Object?.VType == MRubyVType.Integer;
+    internal RHash? AsHashOrNull()
+    {
+        if (bits == (long)InternalMRubyType.Hash)
+        {
+            return Unsafe.As<RHash>(union.RawReference);
+        }
+        return null;
+    }
+    
+    public bool Truthy => 1 < union.RawTagValue;
+    public bool Falsy => (nuint)union.RawTagValue<=1;
 
-    public bool IsFloat => (bits & 0b11) == 0b10;
+    public bool IsInteger => union.TagValue==InternalMRubyType.Integer;
+
+    public bool IsFloat => union.TagValue==InternalMRubyType.Float;
+    internal bool IsNumeric => union.TagValue is InternalMRubyType.Integer or InternalMRubyType.Float;
     public bool IsBreak => Object?.VType == MRubyVType.Break;
     public bool IsProc => Object?.VType == MRubyVType.Proc;
     public bool IsClass => VType is MRubyVType.Class or MRubyVType.SClass or MRubyVType.Module;
     public bool IsNamespace => VType is MRubyVType.Class or MRubyVType.Module;
 
-    public bool BoolValue => (bits & ~False.bits) != 0;
-    public long FixnumValue => bits >> 1;
-    public Symbol SymbolValue => new((uint)(bits >> SymbolShift));
+    public bool BoolValue => union.TagValue is InternalMRubyType.True or InternalMRubyType.False;
+    //public long FixnumValue => bits >> 1;
+    public Symbol SymbolValue => new((uint)bits);
 
-    public long IntegerValue
-    {
-        get
-        {
-            if (Object?.VType == MRubyVType.Integer)
-            {
-                return As<RInteger>().Value;
-            }
-            return bits >> 1;
-        }
-    }
+    public long IntegerValue => bits;
 
-    public double FloatValue
-    {
+    public double FloatValue =>
+        // Assume that MRB_USE_FLOAT32 is not defined
+        // Assume that MRB_WORDBOX_NO_FLOAT_TRUNCATE is not defined
+        Unsafe.As<long, double>(ref Unsafe.AsRef(in bits));
+    
+    internal double NumericValue { 
         get
-        {
-            // Assume that MRB_USE_FLOAT32 is not defined
-            // Assume that MRB_WORDBOX_NO_FLOAT_TRUNCATE is not defined
-            var fbits = bits & ~3;
-            return Unsafe.As<long, double>(ref fbits);
-        }
-    }
+    {
+        if (union.TagValue == InternalMRubyType.Integer) return bits;
+       return Unsafe.As<long, double>(ref Unsafe.AsRef(in bits));
+    }}
 
     public long ObjectId
     {
         get
         {
-            if (!IsImmediate)
+            if (union.IsReference) return union.RawReference.GetHashCode();
+            switch (union.TagValue)
             {
-                if (IsInteger) return IntegerValue;
-                if (IsFloat) return (long)FloatValue;
+                 case InternalMRubyType.Free:
+                 case InternalMRubyType.Undef :return 0;
+                 case InternalMRubyType.Symbol: 
+                 case InternalMRubyType.Integer :return  bits; 
+                 case InternalMRubyType.Float :return  FloatValue.GetHashCode();
             }
-            return bits;
+            return (long)union.TagValue;
         }
     }
 
-    readonly long bits;
+    readonly TypeOrReference union;
+    internal readonly long bits;
 
     MRubyValue(RObject obj)
     {
-        Object = obj;
+       union = new (obj);
+       bits = (long)obj.InternalType;
     }
-
-    MRubyValue(long bits)
+    
+    MRubyValue(RObject obj,InternalMRubyType type)
     {
-        this.bits = bits;
+       union = new (obj);
+       bits = (long)type;
+    }
+    
+    MRubyValue(InternalMRubyType type ,long bits)
+    {
+       union = new (type);
+       this.bits = bits;
     }
 
     public bool Equals(MRubyValue other) => bits == other.bits &&

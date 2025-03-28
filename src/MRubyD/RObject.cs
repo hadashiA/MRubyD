@@ -1,10 +1,12 @@
+using MRubyD.Internals;
+
 namespace MRubyD;
 
 public class RObject : RBasic
 {
     internal VariableTable InstanceVariables { get; } = new();
 
-    internal RObject(MRubyVType vType, RClass klass) : base(vType, klass)
+    internal RObject(InternalMRubyType vType, RClass klass) : base(vType, klass)
     {
     }
 
@@ -17,7 +19,7 @@ public class RObject : RBasic
     /// </remarks>
     internal virtual RObject Clone()
     {
-        var clone = new RObject(VType, Class);
+        var clone = new RObject(InternalType, Class);
         InstanceVariables.CopyTo(clone.InstanceVariables);
         return clone;
     }

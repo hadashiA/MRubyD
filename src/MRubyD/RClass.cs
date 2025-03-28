@@ -1,3 +1,5 @@
+using MRubyD.Internals;
+
 namespace MRubyD;
 
 public class RClass : RObject, ICallScope
@@ -17,13 +19,13 @@ public class RClass : RObject, ICallScope
     RClass super = default!;
     MethodTable methodTable = new();
 
-    internal RClass(RClass classClass, MRubyVType vType = MRubyVType.Class) : base(vType, classClass)
+    internal RClass(RClass classClass, InternalMRubyType vType = InternalMRubyType.Class) : base(vType, classClass)
     {
     }
 
     internal override RObject Clone()
     {
-        var clone = new RClass(Class, VType)
+        var clone = new RClass(Class, InternalType)
         {
             InstanceVType = InstanceVType,
             Super = Super,
@@ -209,7 +211,7 @@ public class RClass : RObject, ICallScope
         }
         mod = mod.AsOrigin();
 
-        return new RClass(klass, MRubyVType.IClass)
+        return new RClass(klass, InternalMRubyType.IClass)
         {
             Super = insertionClass,
             InstanceVType = MRubyVType.Class,

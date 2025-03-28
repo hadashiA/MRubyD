@@ -1,3 +1,5 @@
+using MRubyD.Internals;
+
 namespace MRubyD;
 
 public enum RangeCalculateResult
@@ -25,7 +27,7 @@ public sealed class RRange : RObject
     public bool Exclusive { get; }
 
     internal RRange(MRubyValue begin, MRubyValue end, bool exclusive, RClass rangeClass)
-        : base(MRubyVType.Range, rangeClass)
+        : base(InternalMRubyType.Range, rangeClass)
     {
         Begin = begin;
         End = end;

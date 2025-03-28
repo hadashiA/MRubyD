@@ -1,9 +1,11 @@
+using MRubyD.Internals;
+
 namespace MRubyD;
 
 public sealed class RException(
     RString? message,
     RClass exceptionClass)
-    : RObject(MRubyVType.Exception, exceptionClass)
+    : RObject(InternalMRubyType.Exception, exceptionClass)
 {
     public RString? Message { get; set; } = message;
     public Backtrace? Backtrace { get; set; }

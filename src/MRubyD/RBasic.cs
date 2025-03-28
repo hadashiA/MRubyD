@@ -1,4 +1,5 @@
 using System;
+using MRubyD.Internals;
 
 namespace MRubyD;
 
@@ -20,16 +21,17 @@ public enum MRubyObjectFlags : byte
 
 public class RBasic
 {
-    public MRubyVType VType { get; }
+    internal readonly InternalMRubyType InternalType;
+    public MRubyVType VType => (MRubyVType)(InternalType - 1);
     public RClass Class { get; internal set; }
 
     public MRubyObjectFlags Flags { get; private set; }
     public bool IsFrozen => (Flags & MRubyObjectFlags.Frozen) > 0;
     public bool HasFlag(MRubyObjectFlags flag) => (Flags & flag) > 0;
 
-    internal RBasic(MRubyVType vType, RClass c)
+    internal RBasic(InternalMRubyType vType, RClass c)
     {
-        VType = vType;
+        InternalType = vType;
         Class = c;
     }
 

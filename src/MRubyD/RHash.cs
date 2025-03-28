@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using MRubyD.Internals;
 
 namespace MRubyD;
 
@@ -12,7 +13,7 @@ public sealed class RHash : RObject, IEnumerable<KeyValuePair<MRubyValue, MRubyV
 
     readonly Dictionary<MRubyValue, MRubyValue> table;
 
-    internal RHash(int capacity, IEqualityComparer<MRubyValue> comparer, RClass hashClass) : base(MRubyVType.Hash, hashClass)
+    internal RHash(int capacity, IEqualityComparer<MRubyValue> comparer, RClass hashClass) : base(InternalMRubyType.Hash, hashClass)
     {
         table = new Dictionary<MRubyValue, MRubyValue>(capacity, comparer);
     }
@@ -23,7 +24,7 @@ public sealed class RHash : RObject, IEnumerable<KeyValuePair<MRubyValue, MRubyV
         set => table[key] = value;
     }
 
-    RHash(Dictionary<MRubyValue, MRubyValue> table, RClass hashClass) : base(MRubyVType.Hash, hashClass)
+    RHash(Dictionary<MRubyValue, MRubyValue> table, RClass hashClass) : base(InternalMRubyType.Hash, hashClass)
     {
         this.table = table;
     }

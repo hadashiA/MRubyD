@@ -175,7 +175,7 @@ public partial class MRubyState
         UndefMethod(ClassClass, Intern("extend_object"u8));
         UndefMethod(ClassClass, Intern("module_function"u8));
 
-        TopSelf = new RObject(MRubyVType.Object, ObjectClass);
+        TopSelf = new RObject(InternalMRubyType.Object, ObjectClass);
         // DefineSingletonMethod(TopSelf, Names.Inspect, MainMembers.Inspect);
         // DefineSingletonMethod(TopSelf, Names.ToS, MainMembers.ToS);
         // DefineSingletonMethod(TopSelf, Intern("define_method"u8), MainMembers.DefineMethod);

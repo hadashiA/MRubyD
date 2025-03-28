@@ -1,3 +1,5 @@
+using MRubyD.Internals;
+
 namespace MRubyD;
 
 public enum BreakTag
@@ -13,7 +15,7 @@ public sealed class RBreak : RObject
     public required MRubyValue Value { get; init; }
     public BreakTag Tag { get; set; }
 
-    internal RBreak() : base(MRubyVType.Break, null!)
+    internal RBreak() : base(InternalMRubyType.Break, null!)
     {
     }
 }

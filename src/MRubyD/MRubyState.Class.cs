@@ -1,4 +1,5 @@
 using System;
+using MRubyD.Internals;
 
 namespace MRubyD;
 
@@ -57,7 +58,7 @@ partial class MRubyState
         EnsureNotFrozen(c);
         if (!c.HasFlag(MRubyObjectFlags.ClassPrepended))
         {
-            var origin = new RClass(ClassClass, MRubyVType.IClass)
+            var origin = new RClass(ClassClass, InternalMRubyType.IClass)
             {
                 Super = c.Super,
                 InstanceVType = c.InstanceVType,
@@ -136,7 +137,7 @@ partial class MRubyState
             return value.As<RClass>();
         }
 
-        var m = new RClass(ModuleClass, MRubyVType.Module)
+        var m = new RClass(ModuleClass, InternalMRubyType.Module)
         {
             InstanceVType = MRubyVType.Undef,
             Super = null!
@@ -231,7 +232,7 @@ partial class MRubyState
         RClass singletonClass;
         if (obj is RClass { VType: MRubyVType.Class } objAsClass)
         {
-            singletonClass = new RClass(ClassClass, MRubyVType.SClass)
+            singletonClass = new RClass(ClassClass, InternalMRubyType.SClass)
             {
                 Super = objAsClass.Super == ObjectClass || objAsClass.Super == null!
                     ? ClassClass
@@ -247,7 +248,7 @@ partial class MRubyState
                 c = c.Super;
             }
             PrepareSingletonClass(c.Super);
-            singletonClass = new RClass(ClassClass, MRubyVType.SClass)
+            singletonClass = new RClass(ClassClass, InternalMRubyType.SClass)
             {
                 Super = c.Super.Class,
                 InstanceVType = MRubyVType.Undef,
@@ -255,7 +256,7 @@ partial class MRubyState
         }
         else
         {
-            singletonClass = new RClass(ClassClass, MRubyVType.SClass)
+            singletonClass = new RClass(ClassClass, InternalMRubyType.SClass)
             {
                 Super = obj.Class,
                 InstanceVType = MRubyVType.Undef,
@@ -339,7 +340,7 @@ partial class MRubyState
         if (klass.VType != MRubyVType.SClass) return klass;
 
         // copy singleton(unnamed) class
-        var clone = new RClass(ClassClass, MRubyVType.SClass)
+        var clone = new RClass(ClassClass, InternalMRubyType.SClass)
         {
             Super = klass.Super,
             InstanceVType = klass.InstanceVType,

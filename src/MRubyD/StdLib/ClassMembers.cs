@@ -1,4 +1,5 @@
 using System;
+using MRubyD.Internals;
 
 namespace MRubyD.StdLib;
 
@@ -49,13 +50,13 @@ static class ClassMembers
         }
 
         var instance = c.InstanceVType switch
-        {
+        { 
             MRubyVType.Array => state.NewArray(0),
             MRubyVType.Hash => state.NewHash(0),
             MRubyVType.String => state.NewString(0),
             MRubyVType.Range => throw new NotImplementedException(),
             MRubyVType.Exception => new RException(null!, c),
-            MRubyVType.Object => new RObject(c.InstanceVType, c),
+            MRubyVType.Object => new RObject(c.InternalType, c),
             _ => throw new InvalidOperationException()
         };
         var instanceValue = MRubyValue.From(instance);

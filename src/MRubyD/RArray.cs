@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using MRubyD.Internals;
 
 namespace MRubyD;
 
@@ -28,7 +29,7 @@ public sealed class RArray : RObject
         data.AsSpan(offset + start, Length - start);
 
     internal RArray(ReadOnlySpan<MRubyValue> values, RClass arrayClass)
-        : base(MRubyVType.Array, arrayClass)
+        : base(InternalMRubyType.Array, arrayClass)
     {
         Length = values.Length;
         offset = 0;
@@ -36,7 +37,7 @@ public sealed class RArray : RObject
         dataOwned = true;
     }
 
-    internal RArray(int capacity, RClass arrayClass) : base(MRubyVType.Array, arrayClass)
+    internal RArray(int capacity, RClass arrayClass) : base(InternalMRubyType.Array, arrayClass)
     {
         Length = 0;
         offset = 0;
@@ -49,7 +50,7 @@ public sealed class RArray : RObject
     {
     }
 
-    RArray(RArray shared, int offset, int size) : base(MRubyVType.Array, shared.Class)
+    RArray(RArray shared, int offset, int size) : base(InternalMRubyType.Array, shared.Class)
     {
         if (offset < 0)
         {
