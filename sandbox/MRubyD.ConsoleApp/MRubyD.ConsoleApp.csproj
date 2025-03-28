@@ -6,7 +6,7 @@
         <LangVersion>13</LangVersion>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <TieredCompilation>false</TieredCompilation>
+<!--        <TieredCompilation>false</TieredCompilation>-->
     </PropertyGroup>
 
     <ItemGroup>
