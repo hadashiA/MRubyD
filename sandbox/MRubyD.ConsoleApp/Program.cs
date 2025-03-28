@@ -2,49 +2,65 @@
 
 
 using System.Buffers;
-using System.Buffers.Binary;
 using System.Text;
 using MRubyD;
 using MRubyD.Compiler;
-using MRubyD.Internals;
-using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-
 using JitInspect;
-MRubyState mRubyDState = MRubyState.Create();
 
+MRubyState mRubyDState = MRubyState.Create();
 
 var compiler = MRubyCompiler.Create(mRubyDState);
 
 var arrayBufferWriter = new ArrayBufferWriter<byte>();
 
 var fileIrep = compiler.Compile(ReadBytes("test.rb"));
-Dump (fileIrep);
-mRubyDState.Exec(fileIrep);
-Console.WriteLine(mRubyDState.Exec(fileIrep));
 
+Dump(fileIrep);
 
-Dump(mRubyDState.IntegerClass.MethodTable[mRubyDState.Intern("times"u8)].Proc!.Irep!);
 
 Console.WriteLine(Encoding.UTF8.GetString(arrayBufferWriter.WrittenSpan));
-File.WriteAllBytes(GetAbsolutePath("dump.text"),arrayBufferWriter.WrittenSpan);
+File.WriteAllBytes(GetAbsolutePath("dump.txt"), arrayBufferWriter.WrittenSpan);
 
-var newJIitPath = GetAbsolutePath("jit.text");
-var lastJitPath = GetAbsolutePath("jit_last.text");
 
-if(File.Exists(newJIitPath))
+Console.WriteLine(mRubyDState.Exec(fileIrep));
+
+for (int i = 0; i < 1000; i++)
 {
-    if(File.Exists(lastJitPath)){
-        File.Delete(lastJitPath);
-    }
-    File.Move(newJIitPath,lastJitPath);
-    Console.WriteLine("Last:" + File.ReadAllLines(lastJitPath)[^1]);
+    mRubyDState.Exec(fileIrep);
 }
-var method = typeof(MRubyState).GetMethod("Exec", BindingFlags.Instance | BindingFlags.NonPublic,[typeof(Irep),typeof(int),typeof(int)])!;
+
+var savePath = GetAbsolutePath("history");
+var thisDir = GetThisDirectoryName();
+var newJIitPath = Path.Join(thisDir, $"jit_{DateTime.Now:yyyy-MM-dd-HH-mm}.txt");
+var lastJitPaths = Directory.GetFiles(thisDir).Where(x=>x.Contains("jit_"));
+if (!Directory.Exists(savePath))
+{
+    Directory.CreateDirectory(savePath);
+}
+if (lastJitPaths.Any())
+{
+    Console.WriteLine("Last:" + File.ReadAllLines(lastJitPaths.First())[^1]);
+    foreach (var jitPath in lastJitPaths)
+    {
+        var last = jitPath;
+        var dest = Path.Join(savePath, Path.GetFileName(jitPath));
+        if(File.Exists(last))
+        {
+            Console.WriteLine("Exists:" + last);
+            File.Move(last, dest);
+        }else
+        {
+            Console.WriteLine("Not found:" + last);
+        }
+    }
+    
+}
+var method = typeof(MRubyState).GetMethod("Exec", BindingFlags.Instance | BindingFlags.NonPublic, [typeof(Irep), typeof(int), typeof(int)])!;
 using var disassembler = JitDisassembler.Create();
 var nextJitText = disassembler.Disassemble(method);
-File.WriteAllText(newJIitPath,nextJitText);
+File.WriteAllText(newJIitPath, nextJitText);
 Console.WriteLine("New:" + nextJitText.Split("\n")[^1]);
 
 void Dump(Irep irep)
@@ -56,6 +72,10 @@ void Dump(Irep irep)
     }
 }
 
+static string GetThisDirectoryName([CallerFilePath] string callerFilePath = "")
+{
+    return Path.GetDirectoryName(callerFilePath)!;
+}
 
 static string GetAbsolutePath(string relativePath, [CallerFilePath] string callerFilePath = "")
 {
