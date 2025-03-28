@@ -195,7 +195,7 @@ public readonly struct MRubyValue : IEquatable<MRubyValue>
     }
 
     public bool Equals(MRubyValue other) => bits == other.bits &&
-                                            Object == other.Object;
+                                            union == other.union;
     public static bool operator ==(MRubyValue a, MRubyValue b) => a.Equals(b);
     public static bool operator !=(MRubyValue a, MRubyValue b) => !a.Equals(b);
 

@@ -1,14 +1,30 @@
+using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 namespace MRubyD.Internals;
 
 [DebuggerDisplay("Value = {BoxedValue}")]
-internal readonly struct TypeOrReference
+internal readonly struct TypeOrReference : IEquatable<TypeOrReference>
 {
+    public bool Equals(TypeOrReference other)
+    {
+        return ReferenceEquals(RawReference,other.RawReference);
+    }
+
+    public override bool Equals(object? obj)
+    {
+        return obj is TypeOrReference other && Equals(other);
+    }
+
+    public override int GetHashCode()
+    {
+        return RawReference.GetHashCode();
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public TypeOrReference(RObject reference) => RawReference = reference;
-    public TypeOrReference(InternalMRubyType tag) => Unsafe.As<TypeOrReference, nint>(ref this!) = (nint)tag;
+    public TypeOrReference(InternalMRubyType tag) => Unsafe.As<TypeOrReference, nint>(ref this) = (nint)tag;
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
     public readonly RObject RawReference;
@@ -51,4 +67,8 @@ internal readonly struct TypeOrReference
 
     public object BoxedValue => IsType ? TagValue : RawReference;
     public override string ToString() => BoxedValue.ToString()!;
+    
+    public static bool operator ==(TypeOrReference left, TypeOrReference right) => ReferenceEquals(left.RawReference,right.RawReference);
+
+    public static bool operator !=(TypeOrReference left, TypeOrReference right) => !ReferenceEquals(left.RawReference,right.RawReference);
 }

@@ -1359,7 +1359,7 @@ partial class MRubyState
                             {
                                 if (rhs.ImmediateInternalVType == InternalMRubyType.Integer)
                                 {
-                                    registerA = MRubyValue.From((registerA.IntegerValue == rhs.IntegerValue));
+                                    registerA = MRubyValue.False;
                                     goto Next;
                                 }
                                 registerA = MRubyValue.From((registerA.IntegerValue == (long)rhs.FloatValue));
@@ -1372,7 +1372,6 @@ partial class MRubyState
                                     registerA = MRubyValue.From((long)registerA.FloatValue == rhs.IntegerValue);
                                     goto Next;
                                 }
-
                                 // ReSharper disable once CompareOfFloatsByEqualityOperator
                                 registerA = MRubyValue.From(registerA.FloatValue == rhs.FloatValue);
                             }
@@ -1406,8 +1405,8 @@ partial class MRubyState
                                     goto Next;
                                 }
                                 registerA = MRubyValue.From((registerA.IntegerValue < (long)rhs.FloatValue) ^ opcode == OpCode.GE);
+                                goto Next;
                             }
-                            else
                             {
                                 if (rhs.ImmediateInternalVType == InternalMRubyType.Integer)
                                 {
@@ -1415,8 +1414,8 @@ partial class MRubyState
                                     goto Next;
                                 }
                                 registerA =MRubyValue.From( opcode==OpCode.LT ? registerA.FloatValue < rhs.FloatValue: registerA.FloatValue >= rhs.FloatValue);
+                                 goto Next;
                             }
-                            goto Next;
                         }
 
                         // Jump to send :<=
@@ -1446,8 +1445,8 @@ partial class MRubyState
                                     goto Next;
                                 }
                                 registerA = MRubyValue.From((registerA.IntegerValue <= (long)rhs.FloatValue) ^ opcode == OpCode.GT);
+                                goto Next;
                             }
-                            else
                             {
                                 if (rhs.ImmediateInternalVType == InternalMRubyType.Integer)
                                 {
@@ -1455,8 +1454,8 @@ partial class MRubyState
                                     goto Next;
                                 }
                                 registerA =MRubyValue.From(opcode==OpCode.LE ? registerA.FloatValue <= rhs.FloatValue: registerA.FloatValue > rhs.FloatValue);
+                                goto Next;
                             }
-                            goto Next;
                         }
 
                         // Jump to send :<=
