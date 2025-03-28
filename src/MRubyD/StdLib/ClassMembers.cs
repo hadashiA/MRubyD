@@ -56,7 +56,7 @@ static class ClassMembers
             MRubyVType.String => state.NewString(0),
             MRubyVType.Range => throw new NotImplementedException(),
             MRubyVType.Exception => new RException(null!, c),
-            MRubyVType.Object => new RObject(c.InternalType, c),
+            MRubyVType.Object => new RObject((InternalMRubyType)(c.InstanceVType + 1), c),
             _ => throw new InvalidOperationException()
         };
         var instanceValue = MRubyValue.From(instance);

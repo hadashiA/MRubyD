@@ -1083,7 +1083,7 @@ partial class MRubyState
                         bb = OperandBB.Read(sequence, ref callInfo.ProgramCounter);
                         var key = MRubyValue.From(irep.Symbols[bb.B]);
                         var kdict = registers[callInfo.KeywordArgumentOffset];
-                        registers[bb.A] = MRubyValue.From(kdict.AsHashOrNull()!.TryGetValue(key, out _));
+                        registers[bb.A] = MRubyValue.From(kdict.As<RHash>().TryGetValue(key, out _));
                         goto Next;
                     }
                     case OpCode.KeyEnd:

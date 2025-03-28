@@ -5,16 +5,16 @@ using System.Runtime.CompilerServices;
 namespace MRubyD.Internals;
 
 [DebuggerDisplay("Value = {BoxedValue}")]
-internal readonly struct TypeOrReference : IEquatable<TypeOrReference>
+internal readonly struct TypeReferenceUnion : IEquatable<TypeReferenceUnion>
 {
-    public bool Equals(TypeOrReference other)
+    public bool Equals(TypeReferenceUnion other)
     {
         return ReferenceEquals(RawReference,other.RawReference);
     }
 
     public override bool Equals(object? obj)
     {
-        return obj is TypeOrReference other && Equals(other);
+        return obj is TypeReferenceUnion other && Equals(other);
     }
 
     public override int GetHashCode()
@@ -23,8 +23,8 @@ internal readonly struct TypeOrReference : IEquatable<TypeOrReference>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public TypeOrReference(RObject reference) => RawReference = reference;
-    public TypeOrReference(InternalMRubyType tag) => Unsafe.As<TypeOrReference, nint>(ref this) = (nint)tag;
+    public TypeReferenceUnion(RObject reference) => RawReference = reference;
+    public TypeReferenceUnion(InternalMRubyType tag) => Unsafe.As<TypeReferenceUnion, nint>(ref this) = (nint)tag;
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
     public readonly RObject RawReference;
@@ -34,7 +34,7 @@ internal readonly struct TypeOrReference : IEquatable<TypeOrReference>
     public nint RawTagValue
     {
          [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => Unsafe.As<TypeOrReference, nint>(ref Unsafe.AsRef(in this));
+        get => Unsafe.As<TypeReferenceUnion, nint>(ref Unsafe.AsRef(in this));
     }
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
@@ -68,7 +68,7 @@ internal readonly struct TypeOrReference : IEquatable<TypeOrReference>
     public object BoxedValue => IsType ? TagValue : RawReference;
     public override string ToString() => BoxedValue.ToString()!;
     
-    public static bool operator ==(TypeOrReference left, TypeOrReference right) => ReferenceEquals(left.RawReference,right.RawReference);
+    public static bool operator ==(TypeReferenceUnion left, TypeReferenceUnion right) => ReferenceEquals(left.RawReference,right.RawReference);
 
-    public static bool operator !=(TypeOrReference left, TypeOrReference right) => !ReferenceEquals(left.RawReference,right.RawReference);
+    public static bool operator !=(TypeReferenceUnion left, TypeReferenceUnion right) => !ReferenceEquals(left.RawReference,right.RawReference);
 }
