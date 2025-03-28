@@ -256,7 +256,7 @@ public class RiteParser(MRubyState state)
                     // Float
                     case 5:
                     {
-                        var x = BinaryPrimitives.ReadDoubleBigEndian(bin);
+                        var x = BinaryPrimitives.ReadDoubleLittleEndian(bin);
                         bin = bin[sizeof(double)..];
                         poolingValues[i] = MRubyValue.From(x);
                         break;
