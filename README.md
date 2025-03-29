@@ -7,7 +7,7 @@
 > This project was initially called MRubyD, but was renamed to MRubyCS.
 
 
-mruby/cs is a new [mruby](https://github.com/mruby/mruby) virtual machine implemented in pure C#. The name "mruby/cs" stands for *mruby implemented in C##* and pays homage to the well-known alternative implementation [mruby/c](https://github.com/mrubyc). Designed with seamless integration in mind for C#-based game engines, and emphasize ruby level compatibility. MRubyCS leverages the latest C# features for high performance and high extensibility.
+mruby/cs is a new [mruby](https://github.com/mruby/mruby) virtual machine implemented in pure C#. The name "mruby/cs" stands for *mruby implemented in C#* and pays homage to the well-known alternative implementation [mruby/c](https://github.com/mrubyc). Designed with seamless integration in mind for C#-based game engines, and emphasize ruby level compatibility. MRubyCS leverages the latest C# features for high performance and high extensibility.
 
 ## Features
 
