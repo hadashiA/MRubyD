@@ -51,6 +51,9 @@ jobs:
       sha: ${{ steps.commit.outputs.sha }}
       branch-name: ${{ steps.configure.outputs.branch-name }}
       is-branch-created: ${{ steps.configure.outputs.is-branch-created }}
+    permissions:
+      contents: write
+      
     steps:
       - name: Configure Output variables
         id: configure

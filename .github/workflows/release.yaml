@@ -18,6 +18,8 @@ env:
 jobs:
   update-version-number:
     uses: ./.github/workflows/update-version-number.yaml
+    permissions:
+      contents: write
     with:
       tag: ${{ github.event.inputs.tag }}
       dry-run: ${{ fromJson(github.event.inputs.dry-run) }}
