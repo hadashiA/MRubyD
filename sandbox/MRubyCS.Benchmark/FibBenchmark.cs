@@ -22,9 +22,9 @@ public class FibBenchmark
     }
 
     [Benchmark]
-    public void MRubyD()
+    public void MRubyCS()
     {
-        scriptLoader.RunMRubyD(dataHandle.GetNativeData());
+        scriptLoader.RunMRubyCS(dataHandle.GetNativeData());
     }
 
     [Benchmark]

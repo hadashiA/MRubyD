@@ -25,7 +25,7 @@ unsafe class RubyScriptLoader : IDisposable
         return compiler.CompileToBinaryFormat(source);
     }
 
-    public void RunMRubyD(ReadOnlySpan<byte> bin)
+    public void RunMRubyCS(ReadOnlySpan<byte> bin)
     {
         MRubyDState.Exec(bin);
     }
