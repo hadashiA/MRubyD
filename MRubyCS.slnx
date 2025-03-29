@@ -1,0 +1,14 @@
+﻿<Solution>
+  <Folder Name="/sandbox/">
+    <Project Path="sandbox\MRubyCS.Benchmark\MRubyCS.Benchmark.csproj" Type="Classic C#" />
+    <Project Path="sandbox\MRubyCS.ConsoleApp\MRubyCS.ConsoleApp.csproj" Type="Classic C#" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src\MRubyCS.Compiler\MRubyCS.Compiler.csproj" Type="Classic C#" />
+    <Project Path="src\MRubyCS.SourceGenerator\MRubyCS.SourceGenerator.csproj" Type="Classic C#" />
+    <Project Path="src\MRubyCS\MRubyCS.csproj" Type="Classic C#" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests\MRubyCS.Tests\MRubyCS.Tests.csproj" Type="Classic C#" />
+  </Folder>
+</Solution>

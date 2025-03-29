@@ -1,9 +1,13 @@
-# MRubyD
-
-MRubyD is a new [mruby](https://github.com/mruby/mruby) virtual machine implemented in pure C#. The name "MRubyD" stands for *mruby for [dotnet](https://dotnet.microsoft.com)* and pays homage to the well-known alternative implementation mruby/c. Designed with seamless integration in mind for C#-based game engines, and emphasize ruby level compatibility. MRubyD leverages the latest C# features for high performance and high extensibility.
+# mruby/cs
 
 > [!NOTE]
 > This library is currently in preview
+
+> [!NOTE]
+> This project was initially called MRubyD, but was renamed to MRubyCS.
+
+
+mruby/cs is a new [mruby](https://github.com/mruby/mruby) virtual machine implemented in pure C#. The name "mruby/cs" stands for *mruby implemented in C##* and pays homage to the well-known alternative implementation [mruby/c](https://github.com/mrubyc). Designed with seamless integration in mind for C#-based game engines, and emphasize ruby level compatibility. MRubyCS leverages the latest C# features for high performance and high extensibility.
 
 ## Features
 
@@ -25,7 +29,7 @@ MRubyD is a new [mruby](https://github.com/mruby/mruby) virtual machine implemen
 This release is a preview version and comes with the following constraints:
 
 - Built-in types and methods are still being implemented.
-  - Please refer to [ruby test](https://github.com/hadashiA/MRubyD/tree/main/tests/MRubyD.Tests/ruby/test), etc., for currently supported methods.
+  - Please refer to [ruby test](https://github.com/hadashiA/MRubyCS/tree/main/tests/MRubyCS.Tests/ruby/test), etc., for currently supported methods.
   - We are working on supporting all methods that are built into mruby by default.
 - `private` and `protected` visibitily is not yet implemented. (mruby got support for this in 3.4)
 - This project provides only the VM implementation; it does not include a compiler. To compile mruby scripts, you need the native mruby-compiler.
@@ -41,7 +45,7 @@ This release is a preview version and comes with the following constraints:
 ## Installation
 
 ``` bash
-dotnet add package MRubyD
+dotnet add package MRubyCS
 ```
 
 ## Basic Usage
@@ -62,7 +66,7 @@ $ mrbc -o fibonaci.mrbc fibonacci.rb
 ```
 
 ``` cs
-using MRubyD;
+using MRubyCS;
 
 // Read the .mrb byte-code.
 var bytes = File.ReadAllBytes("fibonacci.mrb");
@@ -230,7 +234,7 @@ var sym2 = state.ToSymbol(state.NewString("sym2"u8));
 ### How to compile .mrb 
 
 
-MRubyD only includes the mruby virtual machine. Therefore it is necessary to convert it to .mrb bytecode before executing the .rb source.
+MRubyCS only includes the mruby virtual machine. Therefore it is necessary to convert it to .mrb bytecode before executing the .rb source.
 Basically, you need the native compiler provided by the [mruby](https://github.com/mruby/mruby) project.
 
 ```bash
@@ -240,19 +244,19 @@ $ rake
 $ ./build/host/bin/mrubc
 ```
 
-#### MRubyD.Compiler
+#### MRubyCS.Compiler
 
-To simplify compilation from C#, we also provide the MRubyD.Compiler package, which is a thin wrapper for the native compiler.
+To simplify compilation from C#, we also provide the MRubyCS.Compiler package, which is a thin wrapper for the native compiler.
 
 > [!NOTE]
-> This MRubyD.Compiler package is a thin wrapper for the native binary. Currently, builds for linux (x64/arm64), macOS (x64/arm64), and windows (x64) are provided.
+> This MRubyCS.Compiler package is a thin wrapper for the native binary. Currently, builds for linux (x64/arm64), macOS (x64/arm64), and windows (x64) are provided.
 
 ```cs
-dotnet add package MRubyD.Compiler
+dotnet add package MRubyCS.Compiler
 ```
 
 ```cs
-using MRubyD.Compiler;
+using MRubyCS.Compiler;
 
 var source = """
 def a

@@ -1,0 +1,29 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+        <Nullable>enable</Nullable>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <RuntimeIdentifiers>osx-arm64</RuntimeIdentifiers>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="MRubyD.Tests" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\MRubyCS\MRubyCS.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <NativeLibs Include="runtimes\**\*.dll*" />
+        <NativeLibs Include="runtimes\**\*.so" />
+        <NativeLibs Include="runtimes\**\*.a" />
+        <NativeLibs Include="runtimes\**\*.dylib" />
+        <None Include="@(NativeLibs)">
+            <Pack>true</Pack>
+            <PackageCopyToOutput>true</PackageCopyToOutput>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
+</Project>
