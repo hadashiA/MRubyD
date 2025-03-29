@@ -32,12 +32,7 @@ partial class MRubyState
 
     public MRubyValue NewInteger(long x)
     {
-        if (MRubyValue.Fixable(x))
-        {
-            return MRubyValue.From(x);
-        }
-        var i = new RInteger((nint)x, IntegerClass);
-        return MRubyValue.From(i);
+        return MRubyValue.From(x);
     }
 
     public Symbol ToSymbol(MRubyValue value)
