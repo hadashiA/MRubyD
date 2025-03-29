@@ -62,7 +62,7 @@ public class MRubyCompiler : IDisposable
         int resultCode;
         fixed (byte* sourcePtr = source)
         {
-            resultCode = NativeMethods.MrbdCompile(
+            resultCode = NativeMethods.MrbcsCompile(
                 mrbPtr,
                 sourcePtr,
                 source.Length,
@@ -97,7 +97,7 @@ public class MRubyCompiler : IDisposable
         int resultCode;
         fixed (byte* codePtr = code)
         {
-            resultCode = NativeMethods.MrbdCompile(
+            resultCode = NativeMethods.MrbcsCompile(
                 mrbPtr,
                 codePtr,
                 code.Length,

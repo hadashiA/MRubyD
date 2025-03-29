@@ -4,8 +4,8 @@ on:
   workflow_dispatch:
 
 env:
-  MRUBY_DIR: ${{ github.workspace }}/src/MRubyD.Compiler/mruby
-  CONFIG_DIR: ${{ github.workspace }}/src/MRubyD.Compiler
+  MRUBY_DIR: ${{ github.workspace }}/src/MRubyCS.Compiler/mruby
+  CONFIG_DIR: ${{ github.workspace }}/src/MRubyCS.Compiler
     
 jobs:
   build-macOS:
