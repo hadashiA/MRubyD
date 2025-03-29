@@ -71,12 +71,29 @@ unsafe class NativeMethods
     [DllImport(DllName, EntryPoint = "mrb_free", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
     public static extern void MrbFree(MrbStateNative* mrb, void *ptr);
 
-    [DllImport(DllName, EntryPoint = "mrbd_compile", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-    public static extern int MrbdCompile(
+    [DllImport(DllName, EntryPoint = "mrbcs_compile", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+    public static extern int MrbcsCompile(
         MrbStateNative* mrb,
         byte* source,
         int sourceLength,
         byte** bin,
         int* binLength,
+        byte** errorMessage);
+
+    [DllImport(DllName, EntryPoint = "mrbcs_compile_to_proc", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+    public static extern int MrbcsCompileToProc(
+        MrbStateNative* mrb,
+        byte* source,
+        int sourceLength,
+        void** proc,
+        byte** errorMessage);
+
+
+    [DllImport(DllName, EntryPoint = "mrbcs_release_proc", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+    public static extern int MrbcsReleaseProc(
+        MrbStateNative* mrb,
+        byte* source,
+        int sourceLength,
+        void** proc,
         byte** errorMessage);
 }

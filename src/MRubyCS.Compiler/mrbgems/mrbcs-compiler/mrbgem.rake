@@ -1,4 +1,4 @@
-MRuby::Gem::Specification.new('mrbd-compiler') do |spec|
+MRuby::Gem::Specification.new('mrbcs-compiler') do |spec|
   spec.license = 'MIT'
   spec.authors = 'hadashiA'
 end
@@ -25,7 +25,7 @@ MRuby.each_target do
     is_vc = primary_toolchain == 'visualcpp'
     is_mingw = ENV['OS'] == 'Windows_NT' && cc.command.start_with?('gcc')
 
-    deffile = "#{File.dirname(__FILE__)}/mrbd.def"
+    deffile = "#{File.dirname(__FILE__)}/mrbcs.def"
 
     flags = []
     flags_after_libraries = []

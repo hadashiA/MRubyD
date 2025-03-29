@@ -4,7 +4,7 @@ MRuby::CrossBuild.new("linux-x64") do |conf|
 
   conf.gem core: 'mruby-compiler'
   # conf.gem core: 'mruby-bin-mrbc'
-  conf.gem './mrbgems/mrbd-compiler'
+  conf.gem './mrbgems/mrbcs-compiler'
 
   conf.disable_presym
 
@@ -34,7 +34,7 @@ MRuby::CrossBuild.new("linux-arm64") do |conf|
 
   conf.gem core: 'mruby-compiler'
   # conf.gem core: 'mruby-bin-mrbc'  
-  conf.gem './mrbgems/mrbd-compiler'
+  conf.gem './mrbgems/mrbcs-compiler'
   
   conf.cc.command = 'aarch64-linux-gnu-gcc'
   conf.linker.command = 'aarch64-linux-gnu-gcc'
