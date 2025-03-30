@@ -809,6 +809,7 @@ partial class MRubyState
                     }
                     case OpCode.SendInternal:
                     {
+                        Markers.SendInternal();
                         var self = context.Stack[callInfo.StackPointer];
                         var receiverClass = opcode == OpCode.Super
                             ? (RClass)callInfo.Scope // set RClass.Super in OpCode.Super

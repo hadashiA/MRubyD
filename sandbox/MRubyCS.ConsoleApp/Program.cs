@@ -26,14 +26,14 @@ File.WriteAllBytes(GetAbsolutePath("dump.txt"), arrayBufferWriter.WrittenSpan);
 
 Console.WriteLine(mRubyDState.Exec(fileIrep));
 
-for (int i = 0; i < 1000; i++)
+for (int i = 0; i < 10000; i++)
 {
     mRubyDState.Exec(fileIrep);
 }
 
 var savePath = GetAbsolutePath("history");
 var thisDir = GetThisDirectoryName();
-var newJIitPath = Path.Join(thisDir, $"jit_{DateTime.Now:yyyy-MM-dd-HH-mm}.txt");
+var newJIitPath = Path.Join(thisDir, $"jit_{DateTime.Now:yyyy-MM-dd-HH-mm-ss}.txt");
 var lastJitPaths = Directory.GetFiles(thisDir).Where(x=>x.Contains("jit_"));
 if (!Directory.Exists(savePath))
 {
@@ -46,14 +46,7 @@ if (lastJitPaths.Any())
     {
         var last = jitPath;
         var dest = Path.Join(savePath, Path.GetFileName(jitPath));
-        if(File.Exists(last))
-        {
-            Console.WriteLine("Exists:" + last);
-            File.Move(last, dest);
-        }else
-        {
-            Console.WriteLine("Not found:" + last);
-        }
+        File.Move(last, dest);
     }
     
 }
