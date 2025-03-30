@@ -93,11 +93,17 @@ partial class MRubyState
         outer ??= ObjectClass;
 
         RClass c;
+        if (super.VType != MRubyVType.Class)
+        {
+            Raise(Names.TypeError, NewString($"super class must be a Class ({super.VType} given)"));
+        }
+
         if (TryGetConst(name, outer, out var value))
         {
-            EnsureValueType(value, MRubyVType.Class);
-            c = value.As<RClass>().AsOrigin();
             EnsureInheritable(super);
+            EnsureValueType(value, MRubyVType.Class);
+
+            c = value.As<RClass>();
             if (c.Super.GetRealClass() != super)
             {
                 Raise(Names.TypeError, NewString(

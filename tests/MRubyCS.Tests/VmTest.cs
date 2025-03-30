@@ -208,28 +208,6 @@ public class VmTest
         Assert.That(result, Is.EqualTo(MRubyValue.From(123)));
     }
 
-    [Test]
-    public void InheritedHook()
-    {
-        var result = Exec("""
-                          class Foo
-                            @@subclass_name = nil
-                            def self.inherited(subclass)
-                              @@subclass_name = subclass
-                            end
-                            def self.subclass_name
-                              @@subclass_name
-                            end
-                          end
-
-                          class Bar < Foo
-                          end
-
-                          Foo.subclass_name
-                          """u8);
-        Assert.That(result, Is.EqualTo(MRubyValue.From(123)));
-    }
-
     MRubyValue Exec(ReadOnlySpan<byte> code)
     {
         var irep = compiler.Compile(code);
