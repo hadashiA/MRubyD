@@ -66,15 +66,16 @@ partial class MRubyState
     {
         ref var ci = ref context.CurrentCallInfo;
         RProc? proc = ci.Proc;
-        var c = proc?.Scope as RClass;
-        while (proc != null && c?.VType != MRubyVType.SClass)
+        RClass? c;
+        while (true)
         {
-            proc = proc.Upper;
-            c = proc?.Scope as RClass;
+            c = proc?.Scope?.TargetClass;
+            if (c != null && c.VType != MRubyVType.SClass)
+            {
+                break;
+            }
         }
-
-        if (c is null) return MRubyValue.Nil;
-        return GetClassVariable(c, id);
+        return c == null! ? MRubyValue.Nil : GetClassVariable(c, id);
     }
 
     public MRubyValue GetClassVariable(RClass c, Symbol id)

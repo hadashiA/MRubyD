@@ -97,7 +97,7 @@ partial class MRubyState
         {
             EnsureValueType(value, MRubyVType.Class);
             c = value.As<RClass>().AsOrigin();
-            EnsureInheritable(c);
+            EnsureInheritable(super);
             if (c.Super.GetRealClass() != super)
             {
                 Raise(Names.TypeError, NewString(
