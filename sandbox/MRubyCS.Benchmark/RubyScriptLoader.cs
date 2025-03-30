@@ -8,34 +8,73 @@ namespace MRubyCS.Benchmark;
 
 unsafe class RubyScriptLoader : IDisposable
 {
-    public MRubyState MRubyDState { get; } = MRubyState.Create();
-    public MrbStateNative* MrbStateNative { get; } = NativeMethods.MrbOpen();
+    readonly MRubyState mrubyCSState;
+    readonly MrbStateNative* mrbStateNative;
 
+    readonly MRubyCompiler mrubyCSCompiler;
     bool disposed;
-    readonly MRubyCompiler compiler;
+
+    Irep? currentMRubyCSIrep;
+    RProcHandle? currentMRubyNativeProc;
 
     public RubyScriptLoader()
     {
-        compiler = MRubyCompiler.Create(MRubyDState);
+        mrubyCSState = MRubyState.Create();
+        mrubyCSCompiler = MRubyCompiler.Create(mrubyCSState);
+
+        mrbStateNative = NativeMethods.MrbOpen();
+    }
+
+    public void PreloadScript(ReadOnlySpan<byte> source)
+    {
+        currentMRubyCSIrep = mrubyCSCompiler.Compile(source);
+
+        currentMRubyNativeProc?.Dispose();
+
+        RProcNative* procPtr = null;
+        byte* errorMessageCStr = null;
+        fixed (byte* sourcePtr = source)
+        {
+            var resultCode = NativeMethods.MrbcsCompileToProc(
+                mrbStateNative,
+                sourcePtr,
+                source.Length,
+                &procPtr,
+                &errorMessageCStr);
+
+            if (resultCode != 0)
+            {
+                if (errorMessageCStr != null)
+                {
+                    var errorMessage = Marshal.PtrToStringUTF8((IntPtr)errorMessageCStr)!;
+                    throw new MRubyCompileException(errorMessage);
+                }
+            }
+        }
+
+        currentMRubyNativeProc = new RProcHandle(mrbStateNative, procPtr);
+    }
+
+    public void PreloadScriptFromFile(string fileName)
+    {
+        var source = ReadBytes(fileName);
+        PreloadScript(source);
     }
 
     public MrbNativeBytesHandle CompileToBinaryFormat(string fileName)
     {
         var source = ReadBytes(fileName);
-        return compiler.CompileToBinaryFormat(source);
+        return mrubyCSCompiler.CompileToBinaryFormat(source);
     }
 
-    public void RunMRubyCS(ReadOnlySpan<byte> bin)
+    public MRubyValue RunMRubyCS()
     {
-        MRubyDState.Exec(bin);
+        return mrubyCSState.Exec(currentMRubyCSIrep!);
     }
 
-    public void RunMRubyNative(ReadOnlySpan<byte> bin)
+    public MrbValueNative RunMRubyNative()
     {
-        fixed (byte* ptr = bin)
-        {
-            NativeMethods.MrbLoadIrep(MrbStateNative, ptr);
-        }
+        return NativeMethods.MrbLoadProc(mrbStateNative, currentMRubyNativeProc!.DangerousGetPtr());
     }
 
     public void Dispose()
@@ -51,7 +90,8 @@ unsafe class RubyScriptLoader : IDisposable
             return;
         }
 
-        NativeMethods.MrbClose(MrbStateNative);
+        currentMRubyNativeProc?.Dispose();
+        NativeMethods.MrbClose(mrbStateNative);
         disposed = true;
     }
 

@@ -79,21 +79,4 @@ unsafe class NativeMethods
         byte** bin,
         int* binLength,
         byte** errorMessage);
-
-    [DllImport(DllName, EntryPoint = "mrbcs_compile_to_proc", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-    public static extern int MrbcsCompileToProc(
-        MrbStateNative* mrb,
-        byte* source,
-        int sourceLength,
-        void** proc,
-        byte** errorMessage);
-
-
-    [DllImport(DllName, EntryPoint = "mrbcs_release_proc", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-    public static extern int MrbcsReleaseProc(
-        MrbStateNative* mrb,
-        byte* source,
-        int sourceLength,
-        void** proc,
-        byte** errorMessage);
 }

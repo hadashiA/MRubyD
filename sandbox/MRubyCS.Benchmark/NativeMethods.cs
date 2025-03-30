@@ -9,6 +9,9 @@ namespace MRubyCS.Benchmark;
 [StructLayout(LayoutKind.Sequential)]
 struct MrbStateNative;
 
+[StructLayout(LayoutKind.Sequential)]
+struct RProcNative;
+
 // ReSharper disable InconsistentNaming
 public enum MrbVtypeNative : byte
 {
@@ -136,6 +139,21 @@ public unsafe struct MrbValueNative
     }
 }
 
+unsafe class RProcHandle(MrbStateNative* mrbStatePtr, RProcNative* procPtr) : SafeHandle((IntPtr)procPtr, true)
+{
+    public override bool IsInvalid => handle == IntPtr.Zero;
+
+
+    public unsafe RProcNative* DangerousGetPtr() => (RProcNative*)DangerousGetHandle();
+
+    protected override unsafe bool ReleaseHandle()
+    {
+        if (IsClosed) return false;
+        NativeMethods.MrbcsReleaseProc(mrbStatePtr, DangerousGetPtr());
+        return true;
+    }
+}
+
 unsafe class NativeMethods
 {
     const string DllName = "libmruby";
@@ -193,9 +211,17 @@ unsafe class NativeMethods
     [DllImport(DllName, EntryPoint = "mrb_close", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
     public static extern void MrbClose(MrbStateNative* mrb);
 
-    [DllImport(DllName, EntryPoint = "mrb_load_nstring", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-    public static extern MrbValueNative MrbLoadNString(MrbStateNative* mrb, void *sourcePtr, nint sourceLength);
+    [DllImport(DllName, EntryPoint = "mrb_load_proc", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+    public static extern MrbValueNative MrbLoadProc(MrbStateNative* mrb, RProcNative *proc);
 
-    [DllImport(DllName, EntryPoint = "mrb_load_irep", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-    public static extern MrbValueNative MrbLoadIrep(MrbStateNative* mrb, void *bin);
+    [DllImport(DllName, EntryPoint = "mrbcs_compile_to_proc", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+    public static extern int MrbcsCompileToProc(
+        MrbStateNative* mrb,
+        byte* source,
+        int sourceLength,
+        RProcNative** proc,
+        byte** errorMessage);
+
+    [DllImport(DllName, EntryPoint = "mrbcs_release_proc", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+    public static extern int MrbcsReleaseProc(MrbStateNative* mrb, RProcNative* procPtr);
 }
