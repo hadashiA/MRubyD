@@ -443,7 +443,7 @@ partial class MRubyState
                         bb = OperandBB.Read(sequence, ref callInfo.ProgramCounter);
                         SetClassVariable(irep.Symbols[bb.B], registers[bb.A]);
                         goto Next;
-                    
+
                     case OpCode.GetConst:
                         Markers.GetConst();
                         bb = OperandBB.Read(sequence, ref callInfo.ProgramCounter);
@@ -499,7 +499,7 @@ partial class MRubyState
                         bb = OperandBB.Read(sequence, ref callInfo.ProgramCounter);
                         registerA = ref registers[bb.A];
                     {
-                        
+
                         //var mod = registers[bb.A];
                         var name = irep.Symbols[bb.B];
                         registerA = GetConst(name, registerA.As<RClass>());
@@ -821,7 +821,7 @@ partial class MRubyState
                                     ? static (state, self, methodId) => state.Raise(Names.NoMethodError, state.NewString($"no superclass method '{state.NameOf(methodId)}' for {state.StringifyAny(self)}"))
                                     : null);
                         }
-                        
+
                         callInfo.Scope = receiverClass;
                         callInfo.Proc = method.Proc;
 
@@ -868,12 +868,13 @@ partial class MRubyState
                         sequence = irep.Sequence.AsSpan();
                         callInfo.ProgramCounter = proc.ProgramCounter;
 
-                        if (callInfo.BlockArgumentOffset + 1 < irep.RegisterVariableCount)
+                        var currentSize = callInfo.BlockArgumentOffset + 1;
+                        if (currentSize < irep.RegisterVariableCount)
                         {
-                            context.ExtendStack(irep.RegisterVariableCount);
+                            context.ExtendStack(callInfo.StackPointer + irep.RegisterVariableCount);
                             context.ClearStack(
-                                callInfo.StackPointer + callInfo.BlockArgumentOffset + 1,
-                                irep.RegisterVariableCount - callInfo.BlockArgumentOffset + 1);
+                                callInfo.StackPointer + currentSize,
+                                irep.RegisterVariableCount - currentSize);
                         }
                         registers = context.Stack.AsSpan(callInfo.StackPointer);
                         if (proc.Scope is REnv env)
