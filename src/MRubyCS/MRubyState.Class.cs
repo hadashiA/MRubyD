@@ -19,8 +19,10 @@ partial class MRubyState
     {
         switch (value.VType)
         {
+            case MRubyVType.Nil:
+                return NilClass;
             case MRubyVType.False:
-                return value.IsNil ? NilClass : FalseClass;
+                return FalseClass;
             case MRubyVType.True:
                 return TrueClass;
             case MRubyVType.Symbol:
