@@ -1968,7 +1968,7 @@ partial class MRubyState
                         a = ReadOperandB(sequence, ref callInfo.ProgramCounter);
                         registerA = ref registers[a];
                         var result = SingletonClassOf(registerA);
-                        registerA = result != null ? MRubyValue.From(result) : MRubyValue.Nil;
+                        registerA = MRubyValue.From(result);
                         goto Next;
                     }
                     case OpCode.TClass:

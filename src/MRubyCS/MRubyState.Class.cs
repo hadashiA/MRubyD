@@ -271,6 +271,10 @@ partial class MRubyState
             PrepareSingletonClass(singletonClass);
         }
         singletonClass.InstanceVariables.Set(Names.AttachedKey, MRubyValue.From(obj));
+        if (obj.IsFrozen)
+        {
+            singletonClass.MarkAsFrozen();
+        }
         obj.Class = singletonClass;
     }
 
