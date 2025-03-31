@@ -70,10 +70,11 @@ partial class MRubyState
         while (true)
         {
             c = proc?.Scope?.TargetClass;
-            if (c != null && c.VType != MRubyVType.SClass)
+            if ((c != null && c.VType != MRubyVType.SClass) || proc == null)
             {
                 break;
             }
+            proc = proc?.Upper;
         }
         return c == null! ? MRubyValue.Nil : GetClassVariable(c, id);
     }

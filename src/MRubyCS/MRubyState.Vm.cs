@@ -1815,9 +1815,16 @@ partial class MRubyState
                         var outer = registers[bb.A];
                         var super = registers[bb.A + 1];
 
-                        var outerClass = outer.IsNil
-                            ? callInfo.Proc?.Scope?.TargetClass ?? ObjectClass
-                            : outer.As<RClass>();
+                        RClass outerClass;
+                        if (outer.IsNil)
+                        {
+                            outerClass = callInfo.Proc?.Scope?.TargetClass ?? ObjectClass;
+                        }
+                        else
+                        {
+                            EnsureClassOrModule(outer);
+                            outerClass = outer.As<RClass>();
+                        }
 
                         // mrb_vm_define_class
                         RClass? superClass = null;
