@@ -3,7 +3,7 @@ namespace MRubyCS.StdLib;
 static class BasicObjectMembers
 {
     [MRubyMethod]
-    public static MRubyMethod Not = new((state, self) => MRubyValue.From(!self.BoolValue));
+    public static MRubyMethod Not = new((_, self) => MRubyValue.From(!self.Truthy));
 
     [MRubyMethod(RequiredArguments = 1)]
     public static MRubyMethod OpEq = new((state, self) =>

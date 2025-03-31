@@ -443,7 +443,7 @@ partial class MRubyState
                         bb = OperandBB.Read(sequence, ref callInfo.ProgramCounter);
                         SetClassVariable(irep.Symbols[bb.B], registers[bb.A]);
                         goto Next;
-                    
+
                     case OpCode.GetConst:
                         Markers.GetConst();
                         bb = OperandBB.Read(sequence, ref callInfo.ProgramCounter);
@@ -499,7 +499,7 @@ partial class MRubyState
                         bb = OperandBB.Read(sequence, ref callInfo.ProgramCounter);
                         registerA = ref registers[bb.A];
                     {
-                        
+
                         //var mod = registers[bb.A];
                         var name = irep.Symbols[bb.B];
                         registerA = GetConst(name, registerA.As<RClass>());
@@ -822,7 +822,7 @@ partial class MRubyState
                                     ? static (state, self, methodId) => state.Raise(Names.NoMethodError, state.NewString($"no superclass method '{state.NameOf(methodId)}' for {state.StringifyAny(self)}"))
                                     : null);
                         }
-                        
+
                         callInfo.Scope = receiverClass;
                         callInfo.Proc = method.Proc;
 
@@ -869,12 +869,13 @@ partial class MRubyState
                         sequence = irep.Sequence.AsSpan();
                         callInfo.ProgramCounter = proc.ProgramCounter;
 
-                        if (callInfo.BlockArgumentOffset + 1 < irep.RegisterVariableCount)
+                        var currentSize = callInfo.BlockArgumentOffset + 1;
+                        if (currentSize < irep.RegisterVariableCount)
                         {
-                            context.ExtendStack(irep.RegisterVariableCount);
+                            context.ExtendStack(callInfo.StackPointer + irep.RegisterVariableCount);
                             context.ClearStack(
-                                callInfo.StackPointer + callInfo.BlockArgumentOffset + 1,
-                                irep.RegisterVariableCount - callInfo.BlockArgumentOffset + 1);
+                                callInfo.StackPointer + currentSize,
+                                irep.RegisterVariableCount - currentSize);
                         }
                         registers = context.Stack.AsSpan(callInfo.StackPointer);
                         if (proc.Scope is REnv env)
@@ -1815,9 +1816,16 @@ partial class MRubyState
                         var outer = registers[bb.A];
                         var super = registers[bb.A + 1];
 
-                        var outerClass = outer.IsNil
-                            ? callInfo.Proc?.Scope?.TargetClass ?? ObjectClass
-                            : outer.As<RClass>();
+                        RClass outerClass;
+                        if (outer.IsNil)
+                        {
+                            outerClass = callInfo.Proc?.Scope?.TargetClass ?? ObjectClass;
+                        }
+                        else
+                        {
+                            EnsureClassOrModule(outer);
+                            outerClass = outer.As<RClass>();
+                        }
 
                         // mrb_vm_define_class
                         RClass? superClass = null;
@@ -1961,7 +1969,7 @@ partial class MRubyState
                         a = ReadOperandB(sequence, ref callInfo.ProgramCounter);
                         registerA = ref registers[a];
                         var result = SingletonClassOf(registerA);
-                        registerA = result != null ? MRubyValue.From(result) : MRubyValue.Nil;
+                        registerA = MRubyValue.From(result);
                         goto Next;
                     }
                     case OpCode.TClass:

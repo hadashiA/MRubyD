@@ -19,8 +19,10 @@ partial class MRubyState
     {
         switch (value.VType)
         {
+            case MRubyVType.Nil:
+                return NilClass;
             case MRubyVType.False:
-                return value.IsNil ? NilClass : FalseClass;
+                return FalseClass;
             case MRubyVType.True:
                 return TrueClass;
             case MRubyVType.Symbol:
@@ -93,11 +95,17 @@ partial class MRubyState
         outer ??= ObjectClass;
 
         RClass c;
+        if (super.VType != MRubyVType.Class)
+        {
+            Raise(Names.TypeError, NewString($"super class must be a Class ({super.VType} given)"));
+        }
+
         if (TryGetConst(name, outer, out var value))
         {
+            EnsureInheritable(super);
             EnsureValueType(value, MRubyVType.Class);
-            c = value.As<RClass>().AsOrigin();
-            EnsureInheritable(c);
+
+            c = value.As<RClass>();
             if (c.Super.GetRealClass() != super)
             {
                 Raise(Names.TypeError, NewString(
@@ -263,6 +271,10 @@ partial class MRubyState
             PrepareSingletonClass(singletonClass);
         }
         singletonClass.InstanceVariables.Set(Names.AttachedKey, MRubyValue.From(obj));
+        if (obj.IsFrozen)
+        {
+            singletonClass.MarkAsFrozen();
+        }
         obj.Class = singletonClass;
     }
 

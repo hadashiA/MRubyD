@@ -105,6 +105,20 @@ def assert_nothing_raised(msg = nil)
   end
 end
 
+def assert_predicate(*args) = _assert_predicate(true, *args)
+def assert_not_predicate(*args) = _assert_predicate(false, *args)
+
+def _assert_predicate(affirmed, obj, op, msg = nil)
+  unless ret = obj.__send__(op) == affirmed
+    diff = "    Expected #{obj.inspect} to #{'not ' unless affirmed}be #{op}."
+  end
+  if ret
+    $asserts.push [true, msg]
+  else
+    $asserts.push [false, msg, diff]
+  end
+end
+
 def _eval_assertion(meth, exp, act_or_msg, msg, block)
   if block
     exp, act, msg = exp, block.call, act_or_msg

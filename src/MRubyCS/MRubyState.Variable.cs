@@ -66,42 +66,51 @@ partial class MRubyState
     {
         ref var ci = ref context.CurrentCallInfo;
         RProc? proc = ci.Proc;
-        var c = proc?.Scope as RClass;
-        while (proc != null && c?.VType != MRubyVType.SClass)
+        RClass? c;
+        while (true)
         {
-            proc = proc.Upper;
-            c = proc?.Scope as RClass;
+            c = proc?.Scope?.TargetClass;
+            if ((c != null && c.VType != MRubyVType.SClass) || proc == null)
+            {
+                break;
+            }
+            proc = proc?.Upper;
         }
-
-        if (c is null) return MRubyValue.Nil;
-        return GetClassVariable(c, id);
+        return c == null! ? MRubyValue.Nil : GetClassVariable(c, id);
     }
 
     public MRubyValue GetClassVariable(RClass c, Symbol id)
     {
         var target = c;
+        var given = false;
+        var result = MRubyValue.Nil;
         while (c != null!)
         {
-            if (c.InstanceVariables.TryGet(id, out var v))
+            if (c.ClassInstanceVariableTable.TryGet(id, out var v))
             {
-                return v;
+                given = true;
+                result = v;
             }
             c = c.Super;
         }
+        if (given) return result;
 
         if (target.VType == MRubyVType.SClass)
         {
             c = target.InstanceVariables.Get(Names.AttachedKey).As<RClass>();
             if (c.VType is MRubyVType.Class or MRubyVType.Module)
             {
+                given = false;
                 while (c != null!)
                 {
                     if (c.InstanceVariables.TryGet(id, out var v))
                     {
-                        return v;
+                        given = true;
+                        result = v;
                     }
                     c = c.Super;
                 }
+                if (given) return result;
             }
         }
 
