@@ -1,4 +1,3 @@
-//#define CASE_MARKER
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -443,7 +442,7 @@ partial class MRubyState
                         bb = OperandBB.Read(sequence, ref callInfo.ProgramCounter);
                         SetClassVariable(irep.Symbols[bb.B], registers[bb.A]);
                         goto Next;
-                    
+
                     case OpCode.GetConst:
                         Markers.GetConst();
                         bb = OperandBB.Read(sequence, ref callInfo.ProgramCounter);
@@ -499,7 +498,7 @@ partial class MRubyState
                         bb = OperandBB.Read(sequence, ref callInfo.ProgramCounter);
                         registerA = ref registers[bb.A];
                     {
-                        
+
                         //var mod = registers[bb.A];
                         var name = irep.Symbols[bb.B];
                         registerA = GetConst(name, registerA.As<RClass>());
@@ -822,7 +821,7 @@ partial class MRubyState
                                     ? static (state, self, methodId) => state.Raise(Names.NoMethodError, state.NewString($"no superclass method '{state.NameOf(methodId)}' for {state.StringifyAny(self)}"))
                                     : null);
                         }
-                        
+
                         callInfo.Scope = receiverClass;
                         callInfo.Proc = method.Proc;
 
