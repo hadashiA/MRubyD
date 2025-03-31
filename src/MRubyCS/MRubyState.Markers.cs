@@ -13,6 +13,10 @@ partial class MRubyState
             InitializeMarkers();
         }
 
+        /// <summary>
+        /// This method is used to call marker methods once for the JIT compiler.
+        /// ClrMd which is used for JIT decompiler cannnot identify the method if they are not called.
+        /// </summary>
         [Conditional("CASE_MARKER")]
         [MethodImpl(MethodImplOptions.NoInlining)]
         static void InitializeMarkers()
