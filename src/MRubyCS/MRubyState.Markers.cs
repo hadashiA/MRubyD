@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+
 // ReSharper disable InconsistentNaming
 // ReSharper disable MemberCanBePrivate.Local
 namespace MRubyCS;
@@ -14,8 +15,8 @@ partial class MRubyState
         }
 
         /// <summary>
-        /// This method is used to call marker methods once for the JIT compiler.
-        /// ClrMd which is used for JIT decompiler cannnot identify the method if they are not called.
+        /// This method is used to call the marker method once for the JIT decompiler.
+        /// ClrMd, used for the JIT decompiler, cannot identify a method unless that method is called at least once.
         /// </summary>
         [Conditional("CASE_MARKER")]
         [MethodImpl(MethodImplOptions.NoInlining)]
