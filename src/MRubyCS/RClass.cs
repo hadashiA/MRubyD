@@ -11,8 +11,13 @@ public class RClass : RObject, ICallScope
         init => super = value;
     }
 
-    internal MethodTable MethodTable => methodTable;
     public bool IsSingletonClass => VType == MRubyVType.SClass;
+
+    internal MethodTable MethodTable => methodTable;
+
+    internal VariableTable ClassInstanceVariableTable => VType == MRubyVType.IClass
+        ? Class.InstanceVariables
+        : InstanceVariables;
 
     RClass super = default!;
     MethodTable methodTable = new();
