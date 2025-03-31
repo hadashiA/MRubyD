@@ -1,23 +1,17 @@
 ﻿using System;
 using System.Reflection;
 using BenchmarkDotNet.Running;
-using MRubyCS;
 using MRubyCS.Benchmark;
 
 BenchmarkSwitcher.FromAssembly(Assembly.GetEntryAssembly()!).Run(args);
 
 // ---
-// var loader = new RubyScriptLoader();
-// var state = MRubyState.Create();
+// using var loader = new RubyScriptLoader();
 //
-// using var bin = loader.CompileToBinaryFormat("bm_fib.rb");
+// loader.PreloadScriptFromFile("bm_fib.rb");
 //
-// var result = state.Exec(bin.GetNativeData());
+// var result = loader.RunMRubyCS();
 // Console.WriteLine(result);
 //
-// unsafe
-// {
-//     var stateNative = NativeMethods.MrbOpen();
-//     var result2 = NativeMethods.MrbLoadIrep(stateNative, bin.DangerousGetHandle().ToPointer());
-//     Console.WriteLine(result2.IntValue);
-// }
+// var result2 = loader.RunMRubyNative();
+// Console.WriteLine(result2.IntValue);

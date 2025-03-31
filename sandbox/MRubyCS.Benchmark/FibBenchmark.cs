@@ -1,5 +1,4 @@
 using BenchmarkDotNet.Attributes;
-using MRubyCS.Compiler;
 
 namespace MRubyCS.Benchmark;
 
@@ -7,12 +6,11 @@ namespace MRubyCS.Benchmark;
 public class FibBenchmark
 {
     readonly RubyScriptLoader scriptLoader = new();
-    MrbNativeBytesHandle dataHandle = default!;
 
     [GlobalSetup]
     public void LoadScript()
     {
-        dataHandle = scriptLoader.CompileToBinaryFormat("bm_fib.rb");
+        scriptLoader.PreloadScriptFromFile("bm_fib.rb");
     }
 
     [GlobalCleanup]
@@ -24,12 +22,12 @@ public class FibBenchmark
     [Benchmark]
     public void MRubyCS()
     {
-        scriptLoader.RunMRubyCS(dataHandle.GetNativeData());
+        scriptLoader.RunMRubyCS();
     }
 
     [Benchmark]
     public unsafe void MRubyNative()
     {
-        scriptLoader.RunMRubyNative(dataHandle.GetNativeData());
+        scriptLoader.RunMRubyNative();
     }
 }

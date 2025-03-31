@@ -6,6 +6,7 @@ EXPORTS
     mrb_load_nstring
     mrb_load_irep
     mrb_load_irep_buf
+    mrb_load_proc
     mrb_gc_unregister
     mrbcs_compile
     mrbcs_compile_to_proc
