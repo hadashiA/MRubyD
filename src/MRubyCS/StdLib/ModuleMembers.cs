@@ -87,13 +87,15 @@ static class ModuleMembers
         var argv = state.GetRestArg(0);
         foreach (var arg in argv)
         {
-            var methodId = arg.SymbolValue;
+            var methodId = state.ToSymbol(arg);
             var name = state.PrepareInstanceVariableName(methodId);
+
+            state.EnsureInstanceVariableName(name);
 
             state.DefineMethod(mod, methodId, (s, _) =>
             {
                 var runtimeSelf = s.GetSelf();
-                return runtimeSelf.As<RObject>().InstanceVariables.Get(name);
+                return state.GetInstanceVariable(runtimeSelf, name);
             });
         }
         return MRubyValue.Nil;
@@ -106,13 +108,15 @@ static class ModuleMembers
         var argv = state.GetRestArg(0);
         foreach (var arg in argv)
         {
-            var variableName = state.PrepareInstanceVariableName(arg.SymbolValue);
-            var setterName = state.PrepareName(arg.SymbolValue, default, "="u8);
+            var attrId = state.ToSymbol(arg);
+            var variableName = state.PrepareInstanceVariableName(attrId);
+            var setterName = state.PrepareName(attrId, default, "="u8);
 
             state.DefineMethod(mod, setterName, new MRubyMethod((s, _) =>
             {
+                var runtimeSelf = s.GetSelf();
                 var value = s.GetArg(0);
-                mod.InstanceVariables.Set(variableName, value);
+                state.SetInstanceVariable(runtimeSelf, variableName, value);
                 return MRubyValue.Nil;
             }));
         }
@@ -213,6 +217,7 @@ static class ModuleMembers
         }
 
         // const get with class path string
+        state.EnsureValueType(path, MRubyVType.String);
         var pathString = path.As<RString>().AsSpan();
         var result = MRubyValue.Nil;
         while (true)

@@ -208,6 +208,34 @@ public class VmTest
         Assert.That(result, Is.EqualTo(MRubyValue.From(123)));
     }
 
+    [Test]
+    public void Hoge()
+    {
+      var result = Exec("""
+                        module M0
+                          def m1; [:M0] end
+                        end
+                        module M1
+                          def m1; [:M1, super, :M1] end
+                        end
+                        module M2
+                          def m1; [:M2, super, :M2] end
+                        end
+                        M3 = Module.new do
+                          def m1; [:M3, super, :M3] end
+                        end
+                        module M4
+                          def m1; [:M4, super, :M4] end
+                        end
+
+                        class P0
+                          include M0
+                          prepend M1
+                          def m1; [:C0, super, :C0] end
+                        end
+                        """u8);
+    }
+
     MRubyValue Exec(ReadOnlySpan<byte> code)
     {
         var irep = compiler.Compile(code);

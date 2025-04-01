@@ -161,7 +161,7 @@ public class RClass : RObject, ICallScope
             {
                 goto SKIP;
             }
-            if (origin == m)
+            if (origin.MethodTable == m.MethodTable)
             {
                 // circular references
                 return false;

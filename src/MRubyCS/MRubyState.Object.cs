@@ -230,9 +230,14 @@ partial class MRubyState
 
     public MRubyValue GetInstanceVariable(MRubyValue obj, Symbol key)
     {
-        if (obj.Object is RObject x)
+        if (obj.Object is RClass c)
         {
-            return x.InstanceVariables.Get(key);
+            return c.ClassInstanceVariableTable.Get(key);
+        }
+
+        if (obj.Object is { } o)
+        {
+            return o.InstanceVariables.Get(key);
         }
         return MRubyValue.Nil;
     }
@@ -240,11 +245,14 @@ partial class MRubyState
     public void SetInstanceVariable(MRubyValue obj, Symbol key, MRubyValue value)
     {
         EnsureNotFrozen(obj);
-        // if (value.IsNamespace)
-        // {
-        //     TrySetClassPathLink(obj.As<RClass>(), value.As<RClass>(), key);
-        // }
-        obj.As<RObject>().InstanceVariables.Set(key, value);
+        if (obj.Object is RClass c)
+        {
+            c.ClassInstanceVariableTable.Set(key, value);
+        }
+        else
+        {
+            obj.As<RObject>().InstanceVariables.Set(key, value);
+        }
     }
 
     public MRubyValue RemoveInstanceVariable(MRubyValue obj, Symbol key)

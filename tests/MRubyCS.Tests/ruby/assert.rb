@@ -108,6 +108,47 @@ end
 def assert_predicate(*args) = _assert_predicate(true, *args)
 def assert_not_predicate(*args) = _assert_predicate(false, *args)
 
+def assert_same(*args); _assert_same(true, *args) end
+def assert_not_same(*args); _assert_same(false, *args) end
+
+def assert_raise_with_message(*args, &block)
+  _assert_raise_with_message(:plain, *args, &block)
+end
+
+def assert_raise_with_message_pattern(*args, &block)
+  _assert_raise_with_message(:pattern, *args, &block)
+end
+
+def _assert_raise_with_message(type, exc, exp_msg, msg = nil, &block)
+  e = msg ? assert_raise(exc, msg, &block) : assert_raise(exc, &block)
+  e ? ($mrbtest_assert_idx[-1]-=1) : (return e)
+
+  err_msg = e.message
+  unless ret = type == :pattern ? _str_match?(exp_msg, err_msg) : exp_msg == err_msg
+    diff = "    Expected Exception(#{exc}) was raised, but the message doesn't match.\n"
+    if type == :pattern
+      diff += "    Expected #{exp_msg.inspect} to match #{err_msg.inspect}."
+    else
+      diff += assertion_diff(exp_msg, err_msg)
+    end
+    $asserts.push [false, msg, diff]
+  else
+    $asserts.push [true, msg]
+  end
+end
+
+def _assert_same(affirmed, exp, act, msg = nil)
+  unless ret = exp.equal?(act) == affirmed
+    exp_str, act_str = [exp, act].map do |o|
+      "#{o.inspect} (class=#{o.class}, oid=#{o.__id__})"
+    end
+    diff = "    Expected #{act_str} to #{'not ' unless affirmed}be the same as #{exp_str}."
+    $asserts.push [false, msg, diff]
+  else
+    $asserts.push [true, msg]
+  end
+end
+
 def _assert_predicate(affirmed, obj, op, msg = nil)
   unless ret = obj.__send__(op) == affirmed
     diff = "    Expected #{obj.inspect} to #{'not ' unless affirmed}be #{op}."

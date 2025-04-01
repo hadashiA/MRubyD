@@ -56,6 +56,11 @@ static class ClassMembers
             MRubyVType.Range => throw new NotImplementedException(),
             MRubyVType.Exception => new RException(null!, c),
             MRubyVType.Object => new RObject(c.InstanceVType, c),
+            MRubyVType.Class or MRubyVType.Module => new RClass(c.Class, c.InstanceVType)
+            {
+                InstanceVType = c.InstanceVType,
+                Super = c
+            },
             _ => throw new InvalidOperationException()
         };
         var instanceValue = MRubyValue.From(instance);

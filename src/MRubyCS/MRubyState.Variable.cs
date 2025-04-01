@@ -12,11 +12,11 @@ partial class MRubyState
         if (recursive)
         {
             module = module.Super;
-            do
+            while (module != null! && module != ObjectClass)
             {
                 if (module.InstanceVariables.Defined(id)) return true;
                 module = module.Super;
-            } while (module == ObjectClass);
+            }
         }
         return false;
     }
