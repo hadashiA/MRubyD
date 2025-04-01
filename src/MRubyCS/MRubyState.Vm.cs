@@ -538,9 +538,8 @@ partial class MRubyState
                                         registerA = substr != null
                                             ? MRubyValue.From(substr)
                                             : MRubyValue.Nil;
-                                    break;
+                                    goto Next;
                                 }
-
                             break;
                         }
 
