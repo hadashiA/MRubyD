@@ -538,9 +538,8 @@ partial class MRubyState
                                         registerA = substr != null
                                             ? MRubyValue.From(substr)
                                             : MRubyValue.Nil;
-                                    break;
+                                    goto Next;
                                 }
-
                             break;
                         }
 
@@ -1043,7 +1042,7 @@ partial class MRubyState
                             }
                             if (mlen < m2)
                             {
-                                registers.Slice(mandantryTotalRequired - m2 + mlen + 1, m2 - mlen + 1);
+                                registers.Slice(mandantryTotalRequired - m2 + mlen + 1, m2 - mlen).Clear();
                             }
 
                             // initialize rest arguments with empty Array
