@@ -232,7 +232,7 @@ partial class MRubyState
     {
         if (obj.Object is RClass c)
         {
-            return c.ClassInstanceVariableTable.Get(key);
+            return c.ClassInstanceVariables.Get(key);
         }
 
         if (obj.Object is { } o)
@@ -247,7 +247,7 @@ partial class MRubyState
         EnsureNotFrozen(obj);
         if (obj.Object is RClass c)
         {
-            c.ClassInstanceVariableTable.Set(key, value);
+            c.ClassInstanceVariables.Set(key, value);
         }
         else
         {

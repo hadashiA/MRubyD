@@ -12,9 +12,10 @@ partial class MRubyState
         if (recursive)
         {
             module = module.Super;
-            while (module != null! && module != ObjectClass)
+            while (module != null!)
             {
-                if (module.InstanceVariables.Defined(id)) return true;
+                if (module.ClassInstanceVariables.Defined(id)) return true;
+                if (module == ObjectClass) return false;
                 module = module.Super;
             }
         }
@@ -86,7 +87,7 @@ partial class MRubyState
         var result = MRubyValue.Nil;
         while (c != null!)
         {
-            if (c.ClassInstanceVariableTable.TryGet(id, out var v))
+            if (c.ClassInstanceVariables.TryGet(id, out var v))
             {
                 given = true;
                 result = v;

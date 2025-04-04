@@ -120,20 +120,30 @@ def assert_raise_with_message_pattern(*args, &block)
 end
 
 def _assert_raise_with_message(type, exc, exp_msg, msg = nil, &block)
-  e = msg ? assert_raise(exc, msg, &block) : assert_raise(exc, &block)
-  e ? ($mrbtest_assert_idx[-1]-=1) : (return e)
-
-  err_msg = e.message
-  unless ret = type == :pattern ? _str_match?(exp_msg, err_msg) : exp_msg == err_msg
-    diff = "    Expected Exception(#{exc}) was raised, but the message doesn't match.\n"
-    if type == :pattern
-      diff += "    Expected #{exp_msg.inspect} to match #{err_msg.inspect}."
-    else
-      diff += assertion_diff(exp_msg, err_msg)
-    end
-    $asserts.push [false, msg, diff]
-  else
+  begin
+    yield
+  rescue exc => e
     $asserts.push [true, msg]
+  rescue Exception => e
+    diff = "    #{exc} exception expected, not\n" \
+           "    Class: <#{e.class}>\n" \
+           "    Message: <#{e}>"
+    err_msg = e.message
+    unless ret = type == :pattern ? _str_match?(exp_msg, err_msg) : exp_msg == err_msg
+      diff = "    Expected Exception(#{exc}) was raised, but the message doesn't match.\n"
+      if type == :pattern
+        diff += "    Expected #{exp_msg.inspect} to match #{err_msg.inspect}."
+      else
+        diff += assertion_diff(exp_msg, err_msg)
+      end
+      $asserts.push [false, msg, diff]
+    else
+      $asserts.push [true, msg]
+    end
+
+  else
+    diff = "    #{exc} expected but nothing was raised."
+    $asserts.push [false, msg, diff]
   end
 end
 

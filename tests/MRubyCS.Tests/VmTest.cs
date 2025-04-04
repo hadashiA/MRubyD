@@ -26,7 +26,7 @@ public class VmTest
     {
         var result = Exec("""
                           def fibonacci(n)
-                            return n if n <= 1 
+                            return n if n <= 1
                             fibonacci(n - 1) + fibonacci(n - 2)
                           end
 
@@ -99,11 +99,11 @@ public class VmTest
                               123
                             end
                           end
-                          
+
                           class A
                             include M
                           end
-                          
+
                           A.new.foo
                           """u8);
         Assert.That(result, Is.EqualTo(MRubyValue.From(123)));
@@ -148,7 +148,7 @@ public class VmTest
         var result = Exec("""
                           class Foo
                             attr_reader :a
-                            
+
                             def initialize(a)
                               @a = a
                             end
@@ -179,12 +179,12 @@ public class VmTest
         var result = Exec("""
                           class A
                             attr_reader :x
-                          
+
                             def foo
                               @x = 123
                             end
                           end
-                          
+
                           a = A.new
                           a.instance_eval { foo }
                           a.x

@@ -15,7 +15,7 @@ public class RClass : RObject, ICallScope
 
     internal MethodTable MethodTable => methodTable;
 
-    internal VariableTable ClassInstanceVariableTable => VType == MRubyVType.IClass
+    internal VariableTable ClassInstanceVariables => VType == MRubyVType.IClass
         ? Class.InstanceVariables
         : InstanceVariables;
 
@@ -205,16 +205,10 @@ public class RClass : RObject, ICallScope
 
     RClass CreateIncludeClass(RClass insertionClass)
     {
-        var mod = this;
-        var klass = mod;
-        if (mod.VType == MRubyVType.IClass)
-        {
-            mod = mod.Class;
-            klass = mod.Class;
-        }
+        var mod = VType == MRubyVType.IClass ? Class : this;
         mod = mod.AsOrigin();
 
-        return new RClass(klass, MRubyVType.IClass)
+        return new RClass(VType == MRubyVType.IClass ? mod.Class : mod, MRubyVType.IClass)
         {
             Super = insertionClass,
             InstanceVType = MRubyVType.Class,
@@ -222,5 +216,5 @@ public class RClass : RObject, ICallScope
         };
     }
 
-    void SetSuper(RClass newSuper) => super = newSuper;
+    internal void SetSuper(RClass newSuper) => super = newSuper;
 }

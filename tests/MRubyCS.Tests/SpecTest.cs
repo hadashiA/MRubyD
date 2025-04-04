@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using MRubyCS.Compiler;
 
 namespace MRubyCS.Tests;
@@ -23,7 +24,7 @@ public class SpecTest
         mrb = MRubyState.Create();
         compiler = MRubyCompiler.Create(mrb);
 
-        mrb.DefineMethod(mrb.ObjectClass, mrb.Intern("__report_result"u8), new MRubyMethod((state, _) =>
+        mrb.DefineMethod(mrb.ObjectClass, mrb.Intern("__report_result"u8), (state, _) =>
         {
             var title = state.GetArgAsString(0).ToString();
             var iso = state.GetArgAsString(1).ToString();
@@ -48,7 +49,18 @@ public class SpecTest
                 index++;
             }
             return MRubyValue.Nil;
-        }));
+        });
+
+        // same as `File.fnmatch?`
+        mrb.DefineMethod(mrb.ObjectClass, mrb.Intern("_str_match?"u8), (state, _) =>
+        {
+            var pattern = state.GetArgAsString(0).ToString();
+            var str = state.GetArgAsString(1).ToString();
+
+            var regexStr = $"^{Regex.Escape(pattern).Replace(@"\*", ".*").Replace(@"\?", ".")}$";
+            var regex = new Regex(regexStr, RegexOptions.IgnoreCase | RegexOptions.Singleline);
+            return MRubyValue.From(regex.Match(str).Success);
+        });
 
         compiler.LoadExecFile(Path.Join(rubyDir, "assert.rb"));
     }

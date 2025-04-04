@@ -450,7 +450,7 @@ partial class MRubyState
                     {
                         var id = irep.Symbols[bb.B];
                         var c = callInfo.Proc?.Scope?.TargetClass ?? ObjectClass;
-                        if (c.InstanceVariables.TryGet(id, out var value))
+                        if (c.ClassInstanceVariables.TryGet(id, out var value))
                         {
                             registerA = value;
                             goto Next;
@@ -459,7 +459,7 @@ partial class MRubyState
                         var x = c;
                         while (x is { VType: MRubyVType.SClass })
                         {
-                            if (!x.InstanceVariables.TryGet(id, out value))
+                            if (!x.ClassInstanceVariables.TryGet(id, out value))
                             {
                                 x = null;
                                 break;
@@ -474,7 +474,7 @@ partial class MRubyState
                         while (proc != null)
                         {
                             x = proc.Scope?.TargetClass ?? ObjectClass;
-                            if (x.InstanceVariables.TryGet(id, out value))
+                            if (x.ClassInstanceVariables.TryGet(id, out value))
                             {
                                 registerA = value;
                                 goto Next;

@@ -22,7 +22,7 @@ static class ModuleMembers
         // state.EnsureValueType(self, MRubyVType.Module);
         var obj = state.GetArg(0);
         var target = state.SingletonClassOf(obj);
-        state.IncludeModule(target!, self.As<RClass>());
+        state.IncludeModule(target, self.As<RClass>());
         return self;
     });
 

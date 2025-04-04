@@ -64,6 +64,8 @@ partial class MRubyState
                 Super = c.Super,
                 InstanceVType = c.InstanceVType,
             };
+            origin.SetFlag(MRubyObjectFlags.ClassOrigin | MRubyObjectFlags.ClassInherited);
+            c.SetSuper(origin);
             c.MoveMethodTableTo(origin);
             c.SetFlag(MRubyObjectFlags.ClassPrepended);
             origin.SetFlag(MRubyObjectFlags.ClassOrigin);
