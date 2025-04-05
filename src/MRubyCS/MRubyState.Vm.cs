@@ -813,7 +813,7 @@ partial class MRubyState
                             ? (RClass)callInfo.Scope // set RClass.Super in OpCode.Super
                             : ClassOf(self);
                         var methodId = callInfo.MethodId;
-                        if (!TryFindMethod(receiverClass, methodId, out var method, out _))
+                        if (!TryFindMethod(receiverClass, methodId, out var method, out receiverClass))
                         {
                             method = PrepareMethodMissing(ref callInfo, self, methodId,
                                 opcode == OpCode.Super

@@ -2,6 +2,41 @@ namespace MRubyCS.StdLib;
 
 static class ArrayMembers
 {
+    public static MRubyMethod OpAref = new((state, self) =>
+    {
+        var array = self.As<RArray>();
+
+        var index = state.GetArg(0);
+        if (state.GetArgumentCount() == 1)
+        {
+            switch (index.VType)
+            {
+                case MRubyVType.Range:
+                    if (index.As<RRange>()
+                            .Calculate(
+                                array.Length,
+                                true,
+                                out var calculatedIndex,
+                                out var calculatedLength) != RangeCalculateResult.TypeMismatch)
+                    {
+                        return MRubyValue.From(array.SubSequence(calculatedIndex, calculatedLength));
+                    }
+                    return MRubyValue.Nil;
+                default:
+                    return array[(int)state.ToInteger(index)];
+            }
+        }
+
+        var i = (int)state.ToInteger(index);
+        var length = state.GetArgAsInteger(1);
+        if (i < 0) i += array.Length;
+        if (i < 0 || array.Length < i) return MRubyValue.Nil;
+        if (length < 0) return MRubyValue.Nil;
+        if (array.Length == i) return MRubyValue.From(state.NewArray(0));
+        if (length > array.Length - i) length = array.Length - i;
+        return MRubyValue.From(array.SubSequence(i, (int)length));
+    });
+
     [MRubyMethod(RequiredArguments = 1)]
     public static MRubyMethod Initialize = new((state, self) =>
     {
@@ -290,4 +325,13 @@ static class ArrayMembers
             _ => self
         };
     });
+
+    static int AsIndex(MRubyState state, MRubyValue index)
+    {
+        if (index.IsInteger)
+        {
+            return (int)index.IntegerValue;
+        }
+        return (int)state.GetArgAsInteger(0);
+    }
 }

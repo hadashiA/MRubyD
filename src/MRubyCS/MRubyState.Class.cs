@@ -59,7 +59,7 @@ partial class MRubyState
         EnsureNotFrozen(c);
         if (!c.HasFlag(MRubyObjectFlags.ClassPrepended))
         {
-            var origin = new RClass(ClassClass, MRubyVType.IClass)
+            var origin = new RClass(c, MRubyVType.IClass)
             {
                 Super = c.Super,
                 InstanceVType = c.InstanceVType,
@@ -68,7 +68,6 @@ partial class MRubyState
             c.SetSuper(origin);
             c.MoveMethodTableTo(origin);
             c.SetFlag(MRubyObjectFlags.ClassPrepended);
-            origin.SetFlag(MRubyObjectFlags.ClassOrigin);
         }
 
         if (!c.TryIncludeModule(c, mod, false))

@@ -150,6 +150,7 @@ public class RClass : RObject, ICallScope
         var m = mod;
         while (m != null!)
         {
+            var p = Super;
             var originalSeen = false;
             var superclassSeen = false;
 
@@ -167,16 +168,15 @@ public class RClass : RObject, ICallScope
                 return false;
             }
 
-            var p = Super;
             while (p != null!)
             {
-                if (methodTable == p.methodTable)
+                if (this == p)
                 {
                     originalSeen = true;
                 }
                 if (p.VType == MRubyVType.IClass)
                 {
-                    if (p.methodTable == m.methodTable)
+                    if (p.MethodTable == m.MethodTable)
                     {
                         if (!superclassSeen && originalSeen)
                         {
