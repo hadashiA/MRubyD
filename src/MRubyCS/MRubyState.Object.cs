@@ -91,12 +91,6 @@ partial class MRubyState
             if (className.IsSymbol)
             {
                 var path = ClassPath.Find(this, c);
-                if (path.Length <= 1)
-                {
-                    var name = NameOf(className.SymbolValue);
-                    c.InstanceVariables.Set(Names.ClassNameKey, MRubyValue.From(name));
-                    return name.Dup();
-                }
                 var pathName = path.ToRString(this);
                 c.InstanceVariables.Set(Names.ClassNameKey, MRubyValue.From(pathName));
                 return pathName.Dup();

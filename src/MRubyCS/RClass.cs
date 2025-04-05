@@ -107,9 +107,9 @@ public class RClass : RObject, ICallScope
 
     public bool TryFindClassSymbol(RClass c, out Symbol symbol)
     {
-        foreach (var (k, v) in InstanceVariables)
+        foreach (var (k, v) in ClassInstanceVariables)
         {
-            if (v.VType == c.VType && v.As<RClass>().Class == c)
+            if (v.VType == c.VType && v.As<RClass>() == c)
             {
                 symbol = k;
                 return true;
