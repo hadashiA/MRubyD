@@ -119,6 +119,27 @@ def assert_raise_with_message_pattern(*args, &block)
   _assert_raise_with_message(:pattern, *args, &block)
 end
 
+def assert_kind_of(cls, obj, msg = nil)
+  unless ret = obj.kind_of?(cls)
+    diff = "    Expected #{obj.inspect} to be a kind of #{cls}, not #{obj.class}."
+    $asserts.push [false, msg, diff]
+  else
+    $asserts.push [true, msg]
+  end
+end
+
+def assert_match(*args); _assert_match(true, *args) end
+def assert_not_match(*args); _assert_match(false, *args) end
+
+def _assert_match(affirmed, pattern, str, msg = nil)
+  unless ret = _str_match?(pattern, str) == affirmed
+    diff = "    Expected #{pattern.inspect} to #{'not ' unless affirmed}match #{str.inspect}."
+    $asserts.push [false, msg, diff]
+  else
+    $asserts.push [true, msg]
+  end
+end
+
 def _assert_raise_with_message(type, exc, exp_msg, msg = nil, &block)
   begin
     yield

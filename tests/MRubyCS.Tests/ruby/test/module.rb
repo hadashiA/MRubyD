@@ -1,5 +1,5 @@
-# ##
-# # Module ISO Test
+##
+# Module ISO Test
 
 def labeled_module(name, &block)
   Module.new do

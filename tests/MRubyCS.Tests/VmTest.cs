@@ -202,38 +202,22 @@ public class VmTest
                           A.class_eval do
                             def foo = 123
                           end
-                          
+
                           A.new.foo
                           """u8);
         Assert.That(result, Is.EqualTo(MRubyValue.From(123)));
     }
 
     [Test]
-    public void Hoge()
+    public void Mod()
     {
       var result = Exec("""
-                        module M0
-                          def m1; [:M0] end
-                        end
-                        module M1
-                          def m1; [:M1, super, :M1] end
-                        end
-                        module M2
-                          def m1; [:M2, super, :M2] end
-                        end
-                        M3 = Module.new do
-                          def m1; [:M3, super, :M3] end
-                        end
-                        module M4
-                          def m1; [:M4, super, :M4] end
+                        module Test4ConstDefined
                         end
 
-                        class P0
-                          include M0
-                          prepend M1
-                          def m1; [:C0, super, :C0] end
-                        end
+                        Test4ConstDefined.const_get(:I_DO_NOT_EXIST)
                         """u8);
+      Assert.That(result, Is.EqualTo(MRubyValue.True));
     }
 
     MRubyValue Exec(ReadOnlySpan<byte> code)

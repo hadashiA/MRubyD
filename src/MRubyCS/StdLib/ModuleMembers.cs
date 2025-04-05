@@ -208,27 +208,28 @@ static class ModuleMembers
     [MRubyMethod(RequiredArguments = 1)]
     public static MRubyMethod ConstGet = new((state, self) =>
     {
+        if (self.VType is not (MRubyVType.Class or MRubyVType.Module or MRubyVType.SClass))
+        {
+            state.Raise(Names.TypeError, "constant look-up for non class/module"u8);
+        }
+
         var mod = self.As<RClass>();
         var path = state.GetArg(0);
         if (path.IsSymbol)
         {
-            state.TryGetConst(path.SymbolValue, mod, out var x);
-            return x;
+            return state.GetConst(path.SymbolValue, mod);
         }
 
         // const get with class path string
         state.EnsureValueType(path, MRubyVType.String);
         var pathString = path.As<RString>().AsSpan();
-        var result = MRubyValue.Nil;
+        MRubyValue result;
         while (true)
         {
             var end = pathString.IndexOf("::"u8);
             if (end < 0) end = pathString.Length;
             var id = state.Intern(pathString[..end]);
-            if (!state.TryGetConst(id, mod, out result))
-            {
-                state.RaiseNameError(id, state.NewString($"wrong constant name '{pathString}'"));
-            }
+            result = state.GetConst(id, mod);
 
             if (end == pathString.Length)
             {

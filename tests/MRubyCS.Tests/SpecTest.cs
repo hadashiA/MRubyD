@@ -51,6 +51,13 @@ public class SpecTest
             return MRubyValue.Nil;
         });
 
+        mrb.DefineMethod(mrb.ObjectClass, mrb.Intern("__log"u8), (state, _) =>
+        {
+            var arg = state.GetArg(0);
+            TestContext.Out.WriteLine(state.Stringify(arg).ToString());
+            return MRubyValue.Nil;
+        });
+
         // same as `File.fnmatch?`
         mrb.DefineMethod(mrb.ObjectClass, mrb.Intern("_str_match?"u8), (state, _) =>
         {

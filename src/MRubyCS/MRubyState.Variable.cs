@@ -1,4 +1,5 @@
 using System;
+using MRubyCS.StdLib;
 
 namespace MRubyCS;
 
@@ -33,7 +34,7 @@ partial class MRubyState
         while (c != null!)
         {
             if (!c.HasFlag(MRubyObjectFlags.ClassPrepended) &&
-                c.InstanceVariables.TryGet(name, out value))
+                c.ClassInstanceVariables.TryGet(name, out value))
             {
                 return true;
             }
@@ -46,11 +47,19 @@ partial class MRubyState
 
     public MRubyValue GetConst(Symbol name, RClass module)
     {
+        EnsureConstName(name);
         if (TryGetConst(name, module, out var result))
         {
             return result;
         }
-        return Send(MRubyValue.From(module), Intern("const_missing"u8), MRubyValue.From(name));
+
+        if (TryFindMethod(module.Class, Intern("const_missing"u8), out var method, out _) &&
+            method != ModuleMembers.ConstMissing)
+        {
+            return Send(MRubyValue.From(module), Intern("const_missing"u8), MRubyValue.From(name));
+        }
+        RaiseConstMissing(module, name);
+        return default; // not reached
     }
 
     public void SetConst(Symbol name, RClass mod, MRubyValue value)
