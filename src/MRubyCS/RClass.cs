@@ -124,7 +124,7 @@ public class RClass : RObject, ICallScope
         var current = this;
         while (current != null!)
         {
-            if (current.methodTable.TryGet(methodId, out method))
+            if (current.MethodTable.TryGet(methodId, out method))
             {
                 receiver = current;
                 return true;

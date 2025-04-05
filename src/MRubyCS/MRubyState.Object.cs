@@ -112,7 +112,7 @@ partial class MRubyState
             ? "Module"u8
             : "Class"u8;
         var h = RuntimeHelpers.GetHashCode(c);
-        var instantName = NewString(Utf8String.Format($"#<{prefix}:{h}>"));
+        var instantName = NewString($"#<{prefix}:0x{h:x}>");
         c.InstanceVariables.Set(Names.ClassNameKey, MRubyValue.From(instantName));
         return instantName;
     }

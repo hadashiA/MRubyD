@@ -270,7 +270,7 @@ static class ModuleMembers
     [MRubyMethod(RequiredArguments = 1)]
     public static MRubyMethod ConstMissing = new((state, self) =>
     {
-        var name = state.GetArg(0).SymbolValue;
+        var name = state.GetArgAsSymbol(0);
         state.RaiseConstMissing(self.As<RClass>(), name);
         return MRubyValue.Nil;
     });
@@ -278,8 +278,8 @@ static class ModuleMembers
     [MRubyMethod(RequiredArguments = 1)]
     public static MRubyMethod MethodDefined = new((state, self) =>
     {
-        var methodId = state.GetArg(0).SymbolValue;
-        return MRubyValue.From(state.RespondTo(self, methodId));
+        var methodId = state.GetArgAsSymbol(0);
+        return MRubyValue.From(state.RespondTo(self.As<RClass>(), methodId));
     });
 
     [MRubyMethod(RequiredArguments = 1, OptionalArguments = 1, BlockArgument = true)]
