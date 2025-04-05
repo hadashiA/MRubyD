@@ -143,11 +143,10 @@ public class RClass : RObject, ICallScope
         methodTable = new MethodTable();
     }
 
-    internal bool TryIncludeModule(RClass insertPos, RClass mod, bool searchSuper)
+    internal bool TryIncludeModule(RClass insertPos, RClass m, bool searchSuper)
     {
         var origin = AsOrigin();
 
-        var m = mod;
         while (m != null!)
         {
             var p = Super;
@@ -193,9 +192,10 @@ public class RClass : RObject, ICallScope
                 p = p.Super;
             }
 
-            var includeClass = mod.CreateIncludeClass(insertPos.Super);
+            var includeClass = m.CreateIncludeClass(insertPos.Super);
             insertPos.super = includeClass;
             insertPos = includeClass;
+            m.SetFlag(MRubyObjectFlags.ClassInherited);
 
             SKIP:
             m = m.Super;
