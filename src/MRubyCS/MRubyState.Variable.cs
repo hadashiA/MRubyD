@@ -65,9 +65,9 @@ partial class MRubyState
     public void SetConst(Symbol name, RClass mod, MRubyValue value)
     {
         EnsureConstName(name);
-        if (value.VType is MRubyVType.Class or MRubyVType.Module)
+        if (value.Object is RClass { VType: MRubyVType.Class or MRubyVType.Module } c)
         {
-            TrySetClassPathLink(mod, ClassOf(value), name);
+            TrySetClassPathLink(mod, c, name);
         }
         mod.InstanceVariables.Set(name, value);
     }

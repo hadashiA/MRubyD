@@ -83,8 +83,8 @@ partial class MRubyState
 
     public void DefineConst(RClass c, Symbol name, MRubyValue value)
     {
+        EnsureNotFrozen(c);
         EnsureConstName(name);
-        EnsureValueIsConst(value);
         if (value.IsNamespace)
         {
             TrySetClassPathLink(c, value.As<RClass>(), name);

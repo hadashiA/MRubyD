@@ -285,25 +285,29 @@ static class ModuleMembers
     [MRubyMethod(RequiredArguments = 1, OptionalArguments = 1, BlockArgument = true)]
     public static MRubyMethod DefineMethod = new((state, self) =>
     {
-        var methodId = state.GetArg(0).SymbolValue;
+        var methodId = state.GetArgAsSymbol(0);
         var proc = state.GetArg(1);
         var block = state.GetBlockArg();
 
-        if (proc.IsNil) proc = MRubyValue.Undef;
-        if (proc is { IsUndef: false, IsProc: false })
+        RProc? p;
+        if (block.Object is RProc blockObj)
         {
-            state.Raise(
-                Names.ArgumentError,
-                state.NewString($"wrong argument type {state.Stringify(proc)} (expected Proc)"));
+            p = blockObj;
         }
-        if (block.IsNil)
+        else
         {
-            state.Raise(Names.ArgumentError, "no block given"u8);
+            if (proc is { IsUndef: false, IsProc: false })
+            {
+                state.Raise(
+                    Names.TypeError,
+                    state.NewString($"wrong argument type {state.Stringify(proc)} (expected Proc)"));
+            }
+            p = proc.As<RProc>();
         }
 
-        var p = block.As<RProc>().Clone();
+        p = (RProc)p.Clone();
         p.SetFlag(MRubyObjectFlags.ProcStrict);
-        var method = new MRubyMethod((RProc)p);
+        var method = new MRubyMethod(p);
 
         var mod = self.As<RClass>();
         state.DefineMethod(mod, methodId, method);

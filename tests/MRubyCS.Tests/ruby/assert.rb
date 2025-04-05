@@ -131,6 +131,18 @@ end
 def assert_match(*args); _assert_match(true, *args) end
 def assert_not_match(*args); _assert_match(false, *args) end
 
+def assert_include(*args); _assert_include(true, *args) end
+def assert_not_include(*args); _assert_include(false, *args) end
+
+def _assert_include(affirmed, collection, obj, msg = nil)
+  unless ret = collection.include?(obj) == affirmed
+    diff = "    Expected #{collection.inspect} to #{'not ' unless affirmed}include #{obj.inspect}."
+    $asserts.push [false, msg, diff]
+  else
+    $asserts.push [true, msg]
+  end
+end
+
 def _assert_match(affirmed, pattern, str, msg = nil)
   unless ret = _str_match?(pattern, str) == affirmed
     diff = "    Expected #{pattern.inspect} to #{'not ' unless affirmed}match #{str.inspect}."
