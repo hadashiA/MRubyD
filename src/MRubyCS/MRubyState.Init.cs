@@ -359,6 +359,7 @@ public partial class MRubyState
         DefineMethod(ArrayClass, Names.QEql, ArrayMembers.Eql);
         DefineMethod(ArrayClass, Names.OpLShift, ArrayMembers.Push);
         DefineMethod(ArrayClass, Names.OpAdd, ArrayMembers.OpAdd);
+        DefineMethod(ArrayClass, Names.OpAref, ArrayMembers.OpAref);
         DefineMethod(ArrayClass, Names.Initialize, ArrayMembers.Initialize);
         DefineMethod(ArrayClass, Intern("push"u8), ArrayMembers.Push);
         DefineMethod(ArrayClass, Intern("size"u8), ArrayMembers.Size);

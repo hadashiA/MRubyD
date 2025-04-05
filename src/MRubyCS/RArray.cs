@@ -112,8 +112,9 @@ public sealed class RArray : RObject
 
     public void Push(MRubyValue newItem)
     {
-        EnsureModifiable(Length + 1, true);
-        data[Length] = newItem;
+        var currentLength = Length;
+        EnsureModifiable(currentLength + 1, true);
+        data[currentLength] = newItem;
     }
 
     public bool TryPop(out MRubyValue value)

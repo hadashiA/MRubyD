@@ -9,7 +9,7 @@ static class AsciiCode
     public static bool IsDigit(byte c) => (c | 0x20) - (byte)'0' < 10;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool IsAlphabet(byte c) => (c | 0x20) - (byte)'a' < 26;
+    public static bool IsAlphabet(byte c) => (byte)((c | 0x20) - (byte)'a') < 26;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsAscii(byte c) => c <= 0x7f;

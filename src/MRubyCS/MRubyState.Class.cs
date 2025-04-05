@@ -59,14 +59,15 @@ partial class MRubyState
         EnsureNotFrozen(c);
         if (!c.HasFlag(MRubyObjectFlags.ClassPrepended))
         {
-            var origin = new RClass(ClassClass, MRubyVType.IClass)
+            var origin = new RClass(c, MRubyVType.IClass)
             {
                 Super = c.Super,
                 InstanceVType = c.InstanceVType,
             };
+            origin.SetFlag(MRubyObjectFlags.ClassOrigin | MRubyObjectFlags.ClassInherited);
+            c.SetSuper(origin);
             c.MoveMethodTableTo(origin);
             c.SetFlag(MRubyObjectFlags.ClassPrepended);
-            origin.SetFlag(MRubyObjectFlags.ClassOrigin);
         }
 
         if (!c.TryIncludeModule(c, mod, false))
@@ -81,8 +82,8 @@ partial class MRubyState
 
     public void DefineConst(RClass c, Symbol name, MRubyValue value)
     {
+        EnsureNotFrozen(c);
         EnsureConstName(name);
-        EnsureValueIsConst(value);
         if (value.IsNamespace)
         {
             TrySetClassPathLink(c, value.As<RClass>(), name);

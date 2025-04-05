@@ -23,7 +23,7 @@ static class NamingRule
 
         if (name[0] != '@') return false;
         if (AsciiCode.IsDigit(name[1])) return false;
-        return AsciiCode.IsIdentifier(name);
+        return AsciiCode.IsIdentifier(name[1..]);
     }
 
     //

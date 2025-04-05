@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using Utf8StringInterpolation;
 
 namespace MRubyCS.Internals;
 
@@ -39,10 +37,10 @@ struct ClassPath
 
     void Add(RClass item)
     {
-        if (length < 0) item0 = item;
-        if (length < 1) item1 = item;
-        if (length < 2) item2 = item;
-        if (length < 3) item3 = item;
+        if (length <= 0) item0 = item;
+        else if (length <= 1) item1 = item;
+        else if (length <= 2) item2 = item;
+        else if (length <= 3) item3 = item;
         else
         {
             (laterItems ??= []).Add(item);
@@ -52,12 +50,22 @@ struct ClassPath
 
     public RString ToRString(MRubyState state)
     {
+        if (Length <= 0)
+        {
+            return state.NewString(0);
+        }
+        if (Length <= 1)
+        {
+            var name = state.Stringify(item0!.ClassInstanceVariables.Get(Names.ClassNameKey));
+            return name.Dup();
+        }
+
         var result = state.NewString(32);
         for (var i = length - 1; i >= 1; i--)
         {
-            var item = this[i];
-            var outer = this[i - 1];
-            if (outer.TryFindClassSymbol(item, out var sym))
+            var outer = this[i];
+            var inner = this[i - 1];
+            if (outer.TryFindClassSymbol(inner, out var sym))
             {
                 result.Concat(state.NameOf(sym));
                 if (i > 1)
@@ -77,13 +85,10 @@ struct ClassPath
         var next = GetOuterClass(state, c);
         while (true)
         {
-            if (current == null) break;
-            if (next == null) break;
-            if (current == next)
-            {
-                // circular dependency
-                break;
-            }
+            if (current == null ||
+                current == state.ObjectClass ||
+                next == null ||
+                current == next) break;
 
             result.Add(next);
 
@@ -95,7 +100,7 @@ struct ClassPath
 
     public static RClass? GetOuterClass(MRubyState state, RClass klass)
     {
-        var value = klass.InstanceVariables.Get(Names.OuterClassKey);
+        var value = klass.InstanceVariables.Get(Names.OuterKey);
         if (value.IsNil) return null;
 
         if (value.VType is MRubyVType.Class or MRubyVType.Module)
@@ -121,4 +126,3 @@ struct ClassPath
         }
     }
 }
-

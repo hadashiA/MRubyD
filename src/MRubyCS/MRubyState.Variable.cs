@@ -1,4 +1,5 @@
 using System;
+using MRubyCS.StdLib;
 
 namespace MRubyCS;
 
@@ -12,11 +13,12 @@ partial class MRubyState
         if (recursive)
         {
             module = module.Super;
-            do
+            while (module != null!)
             {
-                if (module.InstanceVariables.Defined(id)) return true;
+                if (module.ClassInstanceVariables.Defined(id)) return true;
+                if (module == ObjectClass) return false;
                 module = module.Super;
-            } while (module == ObjectClass);
+            }
         }
         return false;
     }
@@ -32,7 +34,7 @@ partial class MRubyState
         while (c != null!)
         {
             if (!c.HasFlag(MRubyObjectFlags.ClassPrepended) &&
-                c.InstanceVariables.TryGet(name, out value))
+                c.ClassInstanceVariables.TryGet(name, out value))
             {
                 return true;
             }
@@ -45,19 +47,27 @@ partial class MRubyState
 
     public MRubyValue GetConst(Symbol name, RClass module)
     {
+        EnsureConstName(name);
         if (TryGetConst(name, module, out var result))
         {
             return result;
         }
-        return Send(MRubyValue.From(module), Intern("const_missing"u8), MRubyValue.From(name));
+
+        if (TryFindMethod(module.Class, Intern("const_missing"u8), out var method, out _) &&
+            method != ModuleMembers.ConstMissing)
+        {
+            return Send(MRubyValue.From(module), Intern("const_missing"u8), MRubyValue.From(name));
+        }
+        RaiseConstMissing(module, name);
+        return default; // not reached
     }
 
     public void SetConst(Symbol name, RClass mod, MRubyValue value)
     {
         EnsureConstName(name);
-        if (value.VType is MRubyVType.Class or MRubyVType.Module)
+        if (value.Object is RClass { VType: MRubyVType.Class or MRubyVType.Module } c)
         {
-            TrySetClassPathLink(mod, ClassOf(value), name);
+            TrySetClassPathLink(mod, c, name);
         }
         mod.InstanceVariables.Set(name, value);
     }
@@ -86,7 +96,7 @@ partial class MRubyState
         var result = MRubyValue.Nil;
         while (c != null!)
         {
-            if (c.ClassInstanceVariableTable.TryGet(id, out var v))
+            if (c.ClassInstanceVariables.TryGet(id, out var v))
             {
                 given = true;
                 result = v;

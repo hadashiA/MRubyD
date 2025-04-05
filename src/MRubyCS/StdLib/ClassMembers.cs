@@ -11,7 +11,6 @@ static class ClassMembers
             ? superValue.As<RClass>()
             : state.ObjectClass;
 
-
         var newClass = new RClass(state.ClassClass)
         {
             Super = superClass,
@@ -56,6 +55,16 @@ static class ClassMembers
             MRubyVType.Range => throw new NotImplementedException(),
             MRubyVType.Exception => new RException(null!, c),
             MRubyVType.Object => new RObject(c.InstanceVType, c),
+            MRubyVType.Class => new RClass(c, c.InstanceVType)
+            {
+                InstanceVType = c.InstanceVType,
+                Super = state.ObjectClass
+            },
+            MRubyVType.Module => new RClass(c, c.InstanceVType)
+            {
+                InstanceVType = MRubyVType.Undef,
+                Super = null!
+            },
             _ => throw new InvalidOperationException()
         };
         var instanceValue = MRubyValue.From(instance);

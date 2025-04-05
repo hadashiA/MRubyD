@@ -15,7 +15,7 @@ public class RClass : RObject, ICallScope
 
     internal MethodTable MethodTable => methodTable;
 
-    internal VariableTable ClassInstanceVariableTable => VType == MRubyVType.IClass
+    internal VariableTable ClassInstanceVariables => VType == MRubyVType.IClass
         ? Class.InstanceVariables
         : InstanceVariables;
 
@@ -107,9 +107,9 @@ public class RClass : RObject, ICallScope
 
     public bool TryFindClassSymbol(RClass c, out Symbol symbol)
     {
-        foreach (var (k, v) in InstanceVariables)
+        foreach (var (k, v) in ClassInstanceVariables)
         {
-            if (v.VType == c.VType && v.As<RClass>().Class == c)
+            if (v.VType == c.VType && v.As<RClass>() == c)
             {
                 symbol = k;
                 return true;
@@ -124,7 +124,7 @@ public class RClass : RObject, ICallScope
         var current = this;
         while (current != null!)
         {
-            if (current.methodTable.TryGet(methodId, out method))
+            if (current.MethodTable.TryGet(methodId, out method))
             {
                 receiver = current;
                 return true;
@@ -143,13 +143,13 @@ public class RClass : RObject, ICallScope
         methodTable = new MethodTable();
     }
 
-    internal bool TryIncludeModule(RClass insertPos, RClass mod, bool searchSuper)
+    internal bool TryIncludeModule(RClass insertPos, RClass m, bool searchSuper)
     {
         var origin = AsOrigin();
 
-        var m = mod;
         while (m != null!)
         {
+            var p = Super;
             var originalSeen = false;
             var superclassSeen = false;
 
@@ -161,22 +161,21 @@ public class RClass : RObject, ICallScope
             {
                 goto SKIP;
             }
-            if (origin == m)
+            if (origin.MethodTable == m.MethodTable)
             {
                 // circular references
                 return false;
             }
 
-            var p = Super;
             while (p != null!)
             {
-                if (methodTable == p.methodTable)
+                if (this == p)
                 {
                     originalSeen = true;
                 }
                 if (p.VType == MRubyVType.IClass)
                 {
-                    if (p.methodTable == m.methodTable)
+                    if (p.MethodTable == m.MethodTable)
                     {
                         if (!superclassSeen && originalSeen)
                         {
@@ -193,9 +192,10 @@ public class RClass : RObject, ICallScope
                 p = p.Super;
             }
 
-            var includeClass = mod.CreateIncludeClass(insertPos.Super);
+            var includeClass = m.CreateIncludeClass(insertPos.Super);
             insertPos.super = includeClass;
             insertPos = includeClass;
+            m.SetFlag(MRubyObjectFlags.ClassInherited);
 
             SKIP:
             m = m.Super;
@@ -205,16 +205,10 @@ public class RClass : RObject, ICallScope
 
     RClass CreateIncludeClass(RClass insertionClass)
     {
-        var mod = this;
-        var klass = mod;
-        if (mod.VType == MRubyVType.IClass)
-        {
-            mod = mod.Class;
-            klass = mod.Class;
-        }
+        var mod = VType == MRubyVType.IClass ? Class : this;
         mod = mod.AsOrigin();
 
-        return new RClass(klass, MRubyVType.IClass)
+        return new RClass(VType == MRubyVType.IClass ? mod.Class : mod, MRubyVType.IClass)
         {
             Super = insertionClass,
             InstanceVType = MRubyVType.Class,
@@ -222,5 +216,5 @@ public class RClass : RObject, ICallScope
         };
     }
 
-    void SetSuper(RClass newSuper) => super = newSuper;
+    internal void SetSuper(RClass newSuper) => super = newSuper;
 }

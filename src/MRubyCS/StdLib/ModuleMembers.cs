@@ -22,7 +22,7 @@ static class ModuleMembers
         // state.EnsureValueType(self, MRubyVType.Module);
         var obj = state.GetArg(0);
         var target = state.SingletonClassOf(obj);
-        state.IncludeModule(target!, self.As<RClass>());
+        state.IncludeModule(target, self.As<RClass>());
         return self;
     });
 
@@ -87,13 +87,15 @@ static class ModuleMembers
         var argv = state.GetRestArg(0);
         foreach (var arg in argv)
         {
-            var methodId = arg.SymbolValue;
+            var methodId = state.ToSymbol(arg);
             var name = state.PrepareInstanceVariableName(methodId);
+
+            state.EnsureInstanceVariableName(name);
 
             state.DefineMethod(mod, methodId, (s, _) =>
             {
                 var runtimeSelf = s.GetSelf();
-                return runtimeSelf.As<RObject>().InstanceVariables.Get(name);
+                return state.GetInstanceVariable(runtimeSelf, name);
             });
         }
         return MRubyValue.Nil;
@@ -106,13 +108,15 @@ static class ModuleMembers
         var argv = state.GetRestArg(0);
         foreach (var arg in argv)
         {
-            var variableName = state.PrepareInstanceVariableName(arg.SymbolValue);
-            var setterName = state.PrepareName(arg.SymbolValue, default, "="u8);
+            var attrId = state.ToSymbol(arg);
+            var variableName = state.PrepareInstanceVariableName(attrId);
+            var setterName = state.PrepareName(attrId, default, "="u8);
 
             state.DefineMethod(mod, setterName, new MRubyMethod((s, _) =>
             {
+                var runtimeSelf = s.GetSelf();
                 var value = s.GetArg(0);
-                mod.InstanceVariables.Set(variableName, value);
+                state.SetInstanceVariable(runtimeSelf, variableName, value);
                 return MRubyValue.Nil;
             }));
         }
@@ -204,26 +208,28 @@ static class ModuleMembers
     [MRubyMethod(RequiredArguments = 1)]
     public static MRubyMethod ConstGet = new((state, self) =>
     {
+        if (self.VType is not (MRubyVType.Class or MRubyVType.Module or MRubyVType.SClass))
+        {
+            state.Raise(Names.TypeError, "constant look-up for non class/module"u8);
+        }
+
         var mod = self.As<RClass>();
         var path = state.GetArg(0);
         if (path.IsSymbol)
         {
-            state.TryGetConst(path.SymbolValue, mod, out var x);
-            return x;
+            return state.GetConst(path.SymbolValue, mod);
         }
 
         // const get with class path string
+        state.EnsureValueType(path, MRubyVType.String);
         var pathString = path.As<RString>().AsSpan();
-        var result = MRubyValue.Nil;
+        MRubyValue result;
         while (true)
         {
             var end = pathString.IndexOf("::"u8);
             if (end < 0) end = pathString.Length;
             var id = state.Intern(pathString[..end]);
-            if (!state.TryGetConst(id, mod, out result))
-            {
-                state.RaiseNameError(id, state.NewString($"wrong constant name '{pathString}'"));
-            }
+            result = state.GetConst(id, mod);
 
             if (end == pathString.Length)
             {
@@ -264,7 +270,7 @@ static class ModuleMembers
     [MRubyMethod(RequiredArguments = 1)]
     public static MRubyMethod ConstMissing = new((state, self) =>
     {
-        var name = state.GetArg(0).SymbolValue;
+        var name = state.GetArgAsSymbol(0);
         state.RaiseConstMissing(self.As<RClass>(), name);
         return MRubyValue.Nil;
     });
@@ -272,32 +278,36 @@ static class ModuleMembers
     [MRubyMethod(RequiredArguments = 1)]
     public static MRubyMethod MethodDefined = new((state, self) =>
     {
-        var methodId = state.GetArg(0).SymbolValue;
-        return MRubyValue.From(state.RespondTo(self, methodId));
+        var methodId = state.GetArgAsSymbol(0);
+        return MRubyValue.From(state.RespondTo(self.As<RClass>(), methodId));
     });
 
     [MRubyMethod(RequiredArguments = 1, OptionalArguments = 1, BlockArgument = true)]
     public static MRubyMethod DefineMethod = new((state, self) =>
     {
-        var methodId = state.GetArg(0).SymbolValue;
+        var methodId = state.GetArgAsSymbol(0);
         var proc = state.GetArg(1);
         var block = state.GetBlockArg();
 
-        if (proc.IsNil) proc = MRubyValue.Undef;
-        if (proc is { IsUndef: false, IsProc: false })
+        RProc? p;
+        if (block.Object is RProc blockObj)
         {
-            state.Raise(
-                Names.ArgumentError,
-                state.NewString($"wrong argument type {state.Stringify(proc)} (expected Proc)"));
+            p = blockObj;
         }
-        if (block.IsNil)
+        else
         {
-            state.Raise(Names.ArgumentError, "no block given"u8);
+            if (proc is { IsUndef: false, IsProc: false })
+            {
+                state.Raise(
+                    Names.TypeError,
+                    state.NewString($"wrong argument type {state.Stringify(proc)} (expected Proc)"));
+            }
+            p = proc.As<RProc>();
         }
 
-        var p = block.As<RProc>().Clone();
+        p = (RProc)p.Clone();
         p.SetFlag(MRubyObjectFlags.ProcStrict);
-        var method = new MRubyMethod((RProc)p);
+        var method = new MRubyMethod(p);
 
         var mod = self.As<RClass>();
         state.DefineMethod(mod, methodId, method);
